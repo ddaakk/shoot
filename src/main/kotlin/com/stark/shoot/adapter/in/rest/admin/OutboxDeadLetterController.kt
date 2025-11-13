@@ -1,15 +1,18 @@
 package com.stark.shoot.adapter.`in`.rest.admin
 
-import com.stark.shoot.adapter.out.persistence.postgres.entity.OutboxDeadLetterEntity
-import com.stark.shoot.adapter.out.persistence.postgres.repository.OutboxDeadLetterRepository
-import io.github.oshai.kotlinlogging.KotlinLogging
+import com.stark.shoot.application.port.`in`.admin.outbox.GetOutboxDeadLetterStatsUseCase
+import com.stark.shoot.application.port.`in`.admin.outbox.GetOutboxDeadLettersUseCase
+import com.stark.shoot.application.port.`in`.admin.outbox.ResolveOutboxDeadLetterUseCase
+import com.stark.shoot.application.port.`in`.admin.outbox.command.GetOutboxDeadLetterCommand
+import com.stark.shoot.application.port.`in`.admin.outbox.command.GetOutboxDeadLettersCommand
+import com.stark.shoot.application.port.`in`.admin.outbox.command.ResolveOutboxDeadLetterCommand
+import com.stark.shoot.application.port.`in`.admin.outbox.result.EventTypeStatsResult
+import com.stark.shoot.application.port.`in`.admin.outbox.result.OutboxDeadLetterResult
+import com.stark.shoot.application.port.`in`.admin.outbox.result.OutboxDeadLetterStatsResult
 import org.springframework.data.domain.Page
-import org.springframework.data.domain.PageRequest
-import org.springframework.data.domain.Sort
 import org.springframework.http.ResponseEntity
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.web.bind.annotation.*
-import java.time.Instant
 
 /**
  * Outbox Dead Letter Queue 관리 API
@@ -22,64 +25,64 @@ import java.time.Instant
 @RequestMapping("/api/admin/outbox-dlq")
 @PreAuthorize("hasRole('ADMIN')")
 class OutboxDeadLetterController(
-    private val deadLetterRepository: OutboxDeadLetterRepository
+    private val getOutboxDeadLettersUseCase: GetOutboxDeadLettersUseCase,
+    private val resolveOutboxDeadLetterUseCase: ResolveOutboxDeadLetterUseCase,
+    private val getOutboxDeadLetterStatsUseCase: GetOutboxDeadLetterStatsUseCase
 ) {
-    private val logger = KotlinLogging.logger {}
 
     @GetMapping
     fun getUnresolvedDLQ(
         @RequestParam(defaultValue = "0") page: Int,
         @RequestParam(defaultValue = "20") size: Int
-    ): ResponseEntity<Page<OutboxDeadLetterEntity>> {
-        val pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"))
-        val dlqPage = deadLetterRepository.findByResolvedFalse(pageable)
+    ): ResponseEntity<Page<OutboxDeadLetterResult>> {
+        val command = GetOutboxDeadLettersCommand.of(page, size)
+        val dlqPage = getOutboxDeadLettersUseCase.getUnresolvedDLQ(command)
         return ResponseEntity.ok(dlqPage)
     }
 
     @GetMapping("/{id}")
-    fun getDLQById(@PathVariable id: Long): ResponseEntity<OutboxDeadLetterEntity> {
-        val dlq = deadLetterRepository.findById(id).orElse(null) 
+    fun getDLQById(@PathVariable id: Long): ResponseEntity<OutboxDeadLetterResult> {
+        val command = GetOutboxDeadLetterCommand.of(id)
+        val dlq = getOutboxDeadLettersUseCase.getDLQById(command)
             ?: return ResponseEntity.notFound().build()
         return ResponseEntity.ok(dlq)
     }
 
     @GetMapping("/saga/{sagaId}")
-    fun getDLQBySagaId(@PathVariable sagaId: String): ResponseEntity<List<OutboxDeadLetterEntity>> {
-        val dlqList = deadLetterRepository.findBySagaIdOrderByCreatedAtDesc(sagaId)
+    fun getDLQBySagaId(@PathVariable sagaId: String): ResponseEntity<List<OutboxDeadLetterResult>> {
+        val dlqList = getOutboxDeadLettersUseCase.getDLQBySagaId(sagaId)
         return ResponseEntity.ok(dlqList)
     }
 
     @PostMapping("/{id}/resolve")
-    fun resolveDLQ(@PathVariable id: Long, @RequestBody request: ResolveDLQRequest): ResponseEntity<OutboxDeadLetterEntity> {
-        val dlq = deadLetterRepository.findById(id).orElse(null) 
-            ?: return ResponseEntity.notFound().build()
-        if (dlq.resolved) {
-            return ResponseEntity.badRequest().build()
+    fun resolveDLQ(@PathVariable id: Long, @RequestBody request: ResolveDLQRequest): ResponseEntity<OutboxDeadLetterResult> {
+        val command = ResolveOutboxDeadLetterCommand.of(id, request.resolvedBy, request.note)
+        return try {
+            val resolvedDLQ = resolveOutboxDeadLetterUseCase.resolveDLQ(command)
+            ResponseEntity.ok(resolvedDLQ)
+        } catch (e: IllegalArgumentException) {
+            ResponseEntity.notFound().build()
+        } catch (e: IllegalStateException) {
+            ResponseEntity.badRequest().build()
         }
-        dlq.markAsResolved(request.resolvedBy, request.note)
-        val savedDLQ = deadLetterRepository.save(dlq)
-        logger.info { "DLQ 해결 처리: id=$id, resolvedBy=${request.resolvedBy}" }
-        return ResponseEntity.ok(savedDLQ)
     }
 
     @GetMapping("/stats")
     fun getDLQStats(): ResponseEntity<DLQStatsResponse> {
-        val unresolvedCount = deadLetterRepository.countByResolvedFalse()
-        val last24hCount = deadLetterRepository.countDLQSince(Instant.now().minusSeconds(24 * 3600))
-        val failuresByType = deadLetterRepository.getFailureStatsByEventType()
-        val stats = DLQStatsResponse(
-            unresolvedCount = unresolvedCount,
-            last24hCount = last24hCount,
-            failuresByType = failuresByType.map {
-                EventTypeStats(eventType = it["eventType"] as String, count = (it["count"] as Long).toInt())
+        val stats = getOutboxDeadLetterStatsUseCase.getDLQStats()
+        val response = DLQStatsResponse(
+            unresolvedCount = stats.unresolvedCount,
+            last24hCount = stats.last24hCount,
+            failuresByType = stats.failuresByType.map {
+                EventTypeStats(eventType = it.eventType, count = it.count)
             }
         )
-        return ResponseEntity.ok(stats)
+        return ResponseEntity.ok(response)
     }
 
     @GetMapping("/recent")
-    fun getRecentDLQ(): ResponseEntity<List<OutboxDeadLetterEntity>> {
-        val recentDLQ = deadLetterRepository.findTop10ByResolvedFalseOrderByCreatedAtDesc()
+    fun getRecentDLQ(): ResponseEntity<List<OutboxDeadLetterResult>> {
+        val recentDLQ = getOutboxDeadLettersUseCase.getRecentDLQ()
         return ResponseEntity.ok(recentDLQ)
     }
 }

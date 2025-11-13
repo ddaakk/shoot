@@ -4,6 +4,7 @@ import com.stark.shoot.adapter.`in`.socket.WebSocketMessageBroker
 import com.stark.shoot.application.port.`in`.message.pin.MessagePinUseCase
 import com.stark.shoot.application.port.`in`.message.pin.command.PinMessageCommand
 import com.stark.shoot.application.port.`in`.message.pin.command.UnpinMessageCommand
+import com.stark.shoot.application.port.`in`.message.pin.result.MessagePinResult
 import com.stark.shoot.application.port.out.event.EventPublishPort
 import com.stark.shoot.application.port.out.chatroom.ChatRoomQueryPort
 import com.stark.shoot.application.port.out.message.MessageQueryPort
@@ -39,10 +40,10 @@ class MessagePinService(
      * 최대 개수를 초과하면 예외를 발생시킵니다.
      *
      * @param command 메시지 고정 커맨드
-     * @return 고정된 메시지
+     * @return 고정된 메시지와 MessagePin Aggregate
      * @throws IllegalStateException 최대 고정 개수를 초과하는 경우
      */
-    override fun pinMessage(command: PinMessageCommand): ChatMessage {
+    override fun pinMessage(command: PinMessageCommand): MessagePinResult {
         val maxPinnedMessages = chatRoomConstants.maxPinnedMessages
 
         // 메시지 조회
@@ -62,7 +63,7 @@ class MessagePinService(
         val existingPin = messagePinQueryPort.findByMessageId(command.messageId)
         if (existingPin != null) {
             // 이미 고정된 메시지이므로 그대로 반환
-            return message
+            return MessagePinResult(message, existingPin)
         }
 
         // 채팅방에 이미 고정된 메시지 개수 확인
@@ -89,16 +90,16 @@ class MessagePinService(
         // 이벤트 발행
         publishPinEvent(message, command.userId, true)
 
-        return message
+        return MessagePinResult(message, messagePin)
     }
 
     /**
      * 메시지 고정을 해제합니다.
      *
      * @param command 메시지 고정 해제 커맨드
-     * @return 고정 해제된 메시지
+     * @return 고정 해제된 메시지 (messagePin은 null)
      */
-    override fun unpinMessage(command: UnpinMessageCommand): ChatMessage {
+    override fun unpinMessage(command: UnpinMessageCommand): MessagePinResult {
         val message = messageQueryPort.findById(command.messageId)
             .orThrowNotFound("메시지", command.messageId)
 
@@ -116,7 +117,7 @@ class MessagePinService(
 
         // 고정되지 않은 메시지인지 확인
         if (messagePin == null) {
-            return message
+            return MessagePinResult(message, null)
         }
 
         // MessagePin Aggregate 삭제
@@ -128,7 +129,7 @@ class MessagePinService(
         // 이벤트 발행
         publishPinEvent(message, command.userId, false)
 
-        return message
+        return MessagePinResult(message, null)
     }
 
 

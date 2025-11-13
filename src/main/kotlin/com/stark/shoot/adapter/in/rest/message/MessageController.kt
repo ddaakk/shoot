@@ -4,7 +4,7 @@ import com.stark.shoot.adapter.`in`.rest.dto.ResponseDto
 import com.stark.shoot.adapter.`in`.rest.dto.message.DeleteMessageRequest
 import com.stark.shoot.adapter.`in`.rest.dto.message.EditMessageRequest
 import com.stark.shoot.adapter.`in`.rest.dto.message.MessageResponseDto
-import com.stark.shoot.adapter.out.persistence.mongodb.mapper.ChatMessageMapper
+import com.stark.shoot.adapter.`in`.rest.dto.message.mapper.MessageResponseMapper
 import com.stark.shoot.application.port.`in`.message.DeleteMessageUseCase
 import com.stark.shoot.application.port.`in`.message.EditMessageUseCase
 import com.stark.shoot.application.port.`in`.message.command.DeleteMessageCommand
@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.*
 class MessageController(
     private val editMessageUseCase: EditMessageUseCase,
     private val deleteMessageUseCase: DeleteMessageUseCase,
-    private val chatMessageMapper: ChatMessageMapper
+    private val messageResponseMapper: MessageResponseMapper
 ) {
 
     @Operation(
@@ -33,7 +33,7 @@ class MessageController(
     ): ResponseDto<MessageResponseDto> {
         val command = EditMessageCommand.of(request.messageId, request.newContent, request.userId)
         val updatedMessage = editMessageUseCase.editMessage(command)
-        return ResponseDto.success(chatMessageMapper.toDto(updatedMessage), "메시지가 수정되었습니다.")
+        return ResponseDto.success(messageResponseMapper.toDto(updatedMessage), "메시지가 수정되었습니다.")
     }
 
     @Operation(
@@ -47,7 +47,7 @@ class MessageController(
     ): ResponseDto<MessageResponseDto> {
         val command = DeleteMessageCommand.of(request.messageId, request.userId)
         val deletedMessage = deleteMessageUseCase.deleteMessage(command)
-        return ResponseDto.success(chatMessageMapper.toDto(deletedMessage), "메시지가 삭제되었습니다.")
+        return ResponseDto.success(messageResponseMapper.toDto(deletedMessage), "메시지가 삭제되었습니다.")
     }
 
 }

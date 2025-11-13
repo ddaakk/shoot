@@ -5,7 +5,6 @@ import com.stark.shoot.adapter.`in`.rest.dto.message.pin.PinResponse
 import com.stark.shoot.application.port.`in`.message.pin.MessagePinUseCase
 import com.stark.shoot.application.port.`in`.message.pin.command.PinMessageCommand
 import com.stark.shoot.application.port.`in`.message.pin.command.UnpinMessageCommand
-import com.stark.shoot.application.port.out.message.pin.MessagePinQueryPort
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.security.core.Authentication
@@ -15,8 +14,7 @@ import org.springframework.web.bind.annotation.*
 @RequestMapping("/api/v1/messages")
 @RestController
 class MessagePinController(
-    private val messagePinUseCase: MessagePinUseCase,
-    private val messagePinQueryPort: MessagePinQueryPort
+    private val messagePinUseCase: MessagePinUseCase
 ) {
 
     @Operation(
@@ -29,12 +27,12 @@ class MessagePinController(
         authentication: Authentication
     ): ResponseDto<PinResponse> {
         val command = PinMessageCommand.of(messageId, authentication)
-        val updatedMessage = messagePinUseCase.pinMessage(command)
+        val result = messagePinUseCase.pinMessage(command)
 
-        // MessagePin Aggregate 조회
-        val messagePin = messagePinQueryPort.findByMessageId(updatedMessage.id!!)
-
-        return ResponseDto.success(PinResponse.from(updatedMessage, messagePin), "메시지가 고정되었습니다.")
+        return ResponseDto.success(
+            PinResponse.from(result.message, result.messagePin),
+            "메시지가 고정되었습니다."
+        )
     }
 
     @Operation(
@@ -47,10 +45,12 @@ class MessagePinController(
         authentication: Authentication
     ): ResponseDto<PinResponse> {
         val command = UnpinMessageCommand.of(messageId, authentication)
-        val updatedMessage = messagePinUseCase.unpinMessage(command)
+        val result = messagePinUseCase.unpinMessage(command)
 
-        // 고정 해제 후이므로 messagePin은 null
-        return ResponseDto.success(PinResponse.from(updatedMessage, null), "메시지 고정이 해제되었습니다.")
+        return ResponseDto.success(
+            PinResponse.from(result.message, result.messagePin),
+            "메시지 고정이 해제되었습니다."
+        )
     }
 
 }
