@@ -1,24 +1,21 @@
 package com.stark.shoot.adapter.`in`.socket
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import com.stark.shoot.adapter.`in`.rest.dto.message.MessageStatusResponse
+import com.stark.shoot.application.port.out.message.FailedMessageCachePort
 import com.stark.shoot.infrastructure.config.async.ApplicationCoroutineScope
 import io.github.oshai.kotlinlogging.KotlinLogging
 import jakarta.annotation.PreDestroy
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withTimeout
-import org.springframework.data.redis.core.StringRedisTemplate
 import org.springframework.messaging.simp.SimpMessagingTemplate
 import org.springframework.stereotype.Component
 import java.util.concurrent.CompletableFuture
-import java.util.concurrent.TimeUnit
 
 @Component
 class WebSocketMessageBroker(
     private val simpMessagingTemplate: SimpMessagingTemplate,
-    private val redisTemplate: StringRedisTemplate,
-    private val objectMapper: ObjectMapper,
+    private val failedMessageCachePort: FailedMessageCachePort,
     private val coroutineScope: ApplicationCoroutineScope
 ) {
     private val logger = KotlinLogging.logger {}
@@ -62,17 +59,12 @@ class WebSocketMessageBroker(
             }
 
             if (!success) {
-                try {
-                    val key = when (payload) {
-                        is MessageStatusResponse -> "failed-message-tempId:${payload.tempId}"
-                        else -> "failed-message:${System.currentTimeMillis()}"
-                    }
-                    val value = objectMapper.writeValueAsString(payload)
-                    redisTemplate.opsForValue().set(key, value, 24, TimeUnit.HOURS)
-                    logger.warn { "WebSocket 전송 실패로 Redis에 저장: $key" }
-                } catch (e: Exception) {
-                    logger.error(e) { "Redis에 실패한 메시지 저장 중 오류 발생" }
+                val key = when (payload) {
+                    is MessageStatusResponse -> "failed-message-tempId:${payload.tempId}"
+                    else -> "failed-message:${System.currentTimeMillis()}"
                 }
+                failedMessageCachePort.saveFailedMessage(key, payload)
+                logger.warn { "WebSocket 전송 실패로 캐시에 저장: $key" }
             }
 
             result.complete(success)
@@ -138,15 +130,10 @@ class WebSocketMessageBroker(
                 logger.error {
                     "사용자 메시지 전송 최종 실패: userId=$userId, destination=$destination, 총 시도 횟수=$attempt"
                 }
-                // 실패한 메시지를 Redis에 저장
-                try {
-                    val key = "failed-user-message:$userId:${System.currentTimeMillis()}"
-                    val value = objectMapper.writeValueAsString(payload)
-                    redisTemplate.opsForValue().set(key, value, 24, TimeUnit.HOURS)
-                    logger.warn { "사용자 메시지 전송 실패로 Redis에 저장: $key" }
-                } catch (e: Exception) {
-                    logger.error(e) { "Redis에 실패한 사용자 메시지 저장 중 오류 발생" }
-                }
+                // 실패한 메시지를 캐시에 저장
+                val key = "failed-user-message:$userId:${System.currentTimeMillis()}"
+                failedMessageCachePort.saveFailedMessage(key, payload)
+                logger.warn { "사용자 메시지 전송 실패로 캐시에 저장: $key" }
             }
         }
 
