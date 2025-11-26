@@ -95,7 +95,7 @@ class KafkaConsumerConfig(
         errorHandler: DefaultErrorHandler
     ): ConcurrentKafkaListenerContainerFactory<String, MessageEvent> {
         val factory = ConcurrentKafkaListenerContainerFactory<String, MessageEvent>()
-        factory.consumerFactory = consumerFactory
+        factory.setConsumerFactory(consumerFactory)
         factory.setCommonErrorHandler(errorHandler)
 
         // 중요: AckMode를 명시적으로 MANUAL로 설정
@@ -105,7 +105,7 @@ class KafkaConsumerConfig(
         factory.setConcurrency(concurrency)
 
         // 배치 리스너 설정
-        factory.isBatchListener = false
+        factory.setBatchListener(false)
 
         // 자동 시작 설정
         factory.setAutoStartup(true)

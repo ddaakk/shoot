@@ -36,7 +36,10 @@ class UserCreateService(
             username = command.username.value,
             nickname = command.nickname.value,
             rawPassword = command.password,
-            passwordEncoder = { rawPassword -> passwordEncoder.encode(rawPassword) },
+            passwordEncoder = { rawPassword ->
+                passwordEncoder.encode(rawPassword)
+                    ?: throw IllegalStateException("Password encoding failed")
+            },
             bio = command.bio?.value,
             profileImageUrl = command.profileImage?.toString()
         )

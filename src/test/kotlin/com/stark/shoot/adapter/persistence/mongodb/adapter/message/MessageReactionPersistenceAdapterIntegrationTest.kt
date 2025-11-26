@@ -9,15 +9,14 @@ import com.stark.shoot.domain.chat.reaction.MessageReaction
 import com.stark.shoot.domain.chat.reaction.type.ReactionType
 import com.stark.shoot.domain.shared.UserId
 import org.assertj.core.api.Assertions.assertThat
+import org.bson.Document
 import org.junit.jupiter.api.*
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.boot.test.autoconfigure.data.mongo.DataMongoTest
+import org.springframework.boot.data.mongodb.test.autoconfigure.DataMongoTest
 import org.springframework.context.annotation.Import
 import org.springframework.data.mongodb.core.MongoTemplate
 import org.springframework.data.mongodb.core.index.CompoundIndexDefinition
 import org.springframework.data.mongodb.core.index.IndexOperations
-import org.springframework.data.domain.Sort
-import org.bson.Document
 import java.time.Instant
 
 /**

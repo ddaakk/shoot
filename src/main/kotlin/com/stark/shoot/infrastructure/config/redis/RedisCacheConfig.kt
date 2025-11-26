@@ -15,10 +15,7 @@ import java.time.Duration
 
 @Configuration
 @EnableCaching
-class RedisCacheConfig(
-    @Value("\${spring.data.redis.host}") private val host: String,
-    @Value("\${spring.data.redis.port}") private val port: Int
-) {
+class RedisCacheConfig {
 
     @Bean
     fun cacheManager(redisConnectionFactory: RedisConnectionFactory): CacheManager {

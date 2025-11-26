@@ -12,12 +12,9 @@ class UserDetailsServiceImpl(
 ) : UserDetailsService {
 
     override fun loadUserByUsername(
-        username: String?
+        username: String
     ): UserDetails {
-        val usernameValue = username
-            ?: throw IllegalArgumentException("Username cannot be null")
-
-        val usernameVo = Username.from(usernameValue)
+        val usernameVo = Username.from(username)
 
         // 사용자 조회
         val user = userQueryPort.findByUsername(usernameVo)

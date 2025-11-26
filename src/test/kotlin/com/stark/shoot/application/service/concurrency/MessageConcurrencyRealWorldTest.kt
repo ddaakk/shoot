@@ -11,16 +11,16 @@ import com.stark.shoot.domain.chat.message.type.MessageType
 import com.stark.shoot.domain.chat.message.vo.MessageId
 import com.stark.shoot.domain.chat.vo.ChatRoomId
 import com.stark.shoot.domain.shared.UserId
-import com.stark.shoot.domain.chatroom.vo.ChatRoomId as ChatRoomQueryId
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.*
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.boot.test.autoconfigure.data.mongo.DataMongoTest
+import org.springframework.boot.data.mongodb.test.autoconfigure.DataMongoTest
 import org.springframework.context.annotation.Import
 import java.time.Instant
 import java.util.concurrent.*
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.random.Random
+import com.stark.shoot.domain.chatroom.vo.ChatRoomId as ChatRoomQueryId
 
 /**
  * 실제 채팅 서비스에서 발생할 수 있는 메시지 동시성 문제 테스트

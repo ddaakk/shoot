@@ -8,14 +8,14 @@ import com.stark.shoot.domain.chat.reaction.MessageReaction
 import com.stark.shoot.domain.chat.reaction.type.ReactionType
 import com.stark.shoot.domain.shared.UserId
 import org.assertj.core.api.Assertions.assertThat
+import org.bson.Document
 import org.junit.jupiter.api.*
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.boot.test.autoconfigure.data.mongo.DataMongoTest
+import org.springframework.boot.data.mongodb.test.autoconfigure.DataMongoTest
 import org.springframework.context.annotation.Import
 import org.springframework.dao.DuplicateKeyException
 import org.springframework.data.mongodb.core.MongoTemplate
 import org.springframework.data.mongodb.core.index.CompoundIndexDefinition
-import org.bson.Document
 import java.util.concurrent.*
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.random.Random
@@ -60,7 +60,8 @@ class ReactionConcurrencyRealWorldTest {
         repository.deleteAll()
 
         // Create unique index for embedded MongoDB
-        val indexOps = mongoTemplate.indexOps(com.stark.shoot.adapter.out.persistence.mongodb.document.message.reaction.MessageReactionDocument::class.java)
+        val indexOps =
+            mongoTemplate.indexOps(com.stark.shoot.adapter.out.persistence.mongodb.document.message.reaction.MessageReactionDocument::class.java)
         val indexDefinition = CompoundIndexDefinition(
             Document()
                 .append("messageId", 1)

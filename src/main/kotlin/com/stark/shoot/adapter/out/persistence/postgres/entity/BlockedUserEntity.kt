@@ -1,6 +1,9 @@
 package com.stark.shoot.adapter.out.persistence.postgres.entity
 
-import jakarta.persistence.*
+import jakarta.persistence.Column
+import jakarta.persistence.Entity
+import jakarta.persistence.Table
+import jakarta.persistence.UniqueConstraint
 import java.time.Instant
 
 /**

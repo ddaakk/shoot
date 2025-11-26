@@ -41,7 +41,7 @@ class AuthHandshakeInterceptor(
             val authentication = jwtAuthenticationService.authenticateToken(token)
             attributes["authentication"] = authentication
             attributes["userId"] = authentication.name
-            request.headers["user"] = listOf(authentication.name)
+            attributes["user"] = authentication.name
             logger.info { "Handshake successful for user: ${authentication.name}" }
             return true
         } catch (e: Exception) {

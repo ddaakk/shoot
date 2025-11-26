@@ -3,17 +3,16 @@ package com.stark.shoot.application.service.concurrency
 import com.stark.shoot.application.port.`in`.chatroom.CreateChatRoomUseCase
 import com.stark.shoot.application.port.`in`.chatroom.command.CreateDirectChatCommand
 import com.stark.shoot.application.port.out.user.UserCommandPort
-import com.stark.shoot.domain.shared.UserId
 import com.stark.shoot.domain.user.User
-import com.stark.shoot.domain.user.vo.Nickname
-import com.stark.shoot.domain.user.vo.Username
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.boot.jdbc.test.autoconfigure.AutoConfigureTestDatabase
 import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.context.annotation.Import
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.transaction.annotation.Transactional
 
@@ -38,8 +37,8 @@ import org.springframework.transaction.annotation.Transactional
 )
 @ActiveProfiles("test")
 @Transactional
-@org.springframework.context.annotation.Import(com.stark.shoot.config.TestMongoConfiguration::class)
-@org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase(replace = org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase.Replace.NONE)
+@Import(com.stark.shoot.config.TestMongoConfiguration::class)
+@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 class ChatRoomConcurrencyTest {
 
     @Autowired

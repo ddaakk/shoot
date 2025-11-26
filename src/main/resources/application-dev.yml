@@ -1,0 +1,84 @@
+server:
+  port: 8100
+
+spring:
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/member}
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:1234}
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    database: POSTGRESQL
+    defer-datasource-initialization: false
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    locations: classpath:db/migration
+    validate-on-migrate: true
+
+  mongodb:
+    uri: ${MONGO_URI:mongodb://admin:admin123@localhost:27017/shoot?authSource=admin}
+
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:redis}
+      connect-timeout: 2000
+      timeout: 3000
+      lettuce:
+        pool:
+          max-active: 8
+          max-idle: 8
+          min-idle: 2
+          max-wait: 1000
+        shutdown-timeout: 100
+
+  kafka:
+    consumer:
+      bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:10000,localhost:10001,localhost:10002}
+      group-id: shoot-dev
+      auto-offset-reset: latest
+      enable-auto-commit: false
+      fetch-min-bytes: 1
+      fetch-max-wait: 10
+      max-poll-records: 100
+    producer:
+      bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:10000,localhost:10001,localhost:10002}
+      acks: 1
+      compression-type: lz4
+      batch-size: 16384
+      linger-ms: 0
+      properties:
+        enable.idempotence: true
+        max.in.flight.requests.per.connection: 5
+    topics:
+      chat-messages:
+        partitions: 3
+        replicas: 2
+      chat-notifications:
+        partitions: 3
+        replicas: 2
+      chat-events:
+        partitions: 3
+        replicas: 2
+      dead-letter-topic:
+        partitions: 1
+        replicas: 2
+        retention-ms: 604800000
+
+logging:
+  level:
+    root: INFO
+    com.stark.shoot: INFO
+    org.springframework.data.mongodb: INFO
+    org.springframework.messaging: WARN
+    org.springframework.web: INFO
+    org.springframework.kafka: WARN
+    org.apache.kafka.clients.consumer.ConsumerConfig: WARN
+    org.apache.kafka.clients.producer.ProducerConfig: WARN
