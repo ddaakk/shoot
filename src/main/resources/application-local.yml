@@ -57,20 +57,6 @@ spring:
       properties:
         enable.idempotence: true
         max.in.flight.requests.per.connection: 5
-    topics:
-      chat-messages:
-        partitions: 3
-        replicas: 2
-      chat-notifications:
-        partitions: 3
-        replicas: 2
-      chat-events:
-        partitions: 3
-        replicas: 2
-      dead-letter-topic:
-        partitions: 1
-        replicas: 2
-        retention-ms: 604800000
 
 logging:
   level:

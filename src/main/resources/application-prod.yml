@@ -45,7 +45,7 @@ spring:
 
   kafka:
     admin:
-      auto-create: false  # 프로덕션에서는 토픽 자동 생성 비활성화
+      auto-create: false  # 프로덕션에서는 토픽 자동 생성 비활성화 (IaC로 관리)
     consumer:
       bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS}
       group-id: shoot-prod
@@ -63,20 +63,6 @@ spring:
       properties:
         enable.idempotence: true
         max.in.flight.requests.per.connection: 5
-    topics:
-      chat-messages:
-        partitions: 10
-        replicas: 3
-      chat-notifications:
-        partitions: 10
-        replicas: 3
-      chat-events:
-        partitions: 10
-        replicas: 3
-      dead-letter-topic:
-        partitions: 3
-        replicas: 3
-        retention-ms: 2592000000  # 30일
 
 logging:
   level:

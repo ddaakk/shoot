@@ -24,12 +24,24 @@ class UserController(
 ) {
 
     @Operation(
-        summary = "사용자 생성 (회원가입)",
-        description = "새로운 사용자를 생성합니다."
+        summary = "사용자 생성 (회원가입) - Multipart",
+        description = "새로운 사용자를 생성합니다 (프로필 이미지 포함)."
     )
     @ResponseStatus(HttpStatus.CREATED)
     @PostMapping(consumes = [MediaType.MULTIPART_FORM_DATA_VALUE])
     fun createUser(@RequestBody request: CreateUserRequest): ResponseDto<UserResponse> {
+        val command = CreateUserCommand.of(request)
+        val user = userCreateUseCase.createUser(command)
+        return ResponseDto.success(user.toResponse(), "회원가입이 완료되었습니다.")
+    }
+
+    @Operation(
+        summary = "사용자 생성 (회원가입) - JSON",
+        description = "새로운 사용자를 생성합니다 (모바일 앱용)."
+    )
+    @ResponseStatus(HttpStatus.CREATED)
+    @PostMapping(consumes = [MediaType.APPLICATION_JSON_VALUE])
+    fun createUserJson(@RequestBody request: CreateUserRequest): ResponseDto<UserResponse> {
         val command = CreateUserCommand.of(request)
         val user = userCreateUseCase.createUser(command)
         return ResponseDto.success(user.toResponse(), "회원가입이 완료되었습니다.")
