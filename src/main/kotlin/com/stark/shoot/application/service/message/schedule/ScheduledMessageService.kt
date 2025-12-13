@@ -1,7 +1,8 @@
 package com.stark.shoot.application.service.message.schedule
 
-import com.stark.shoot.adapter.`in`.rest.dto.ApiException
-import com.stark.shoot.adapter.`in`.rest.dto.ErrorCode
+import com.stark.shoot.infrastructure.exception.web.InvalidInputException
+import com.stark.shoot.infrastructure.exception.web.ResourceNotFoundException
+import com.stark.shoot.infrastructure.exception.web.UnauthorizedException
 import com.stark.shoot.adapter.`in`.rest.dto.message.schedule.ScheduledMessageResponseDto
 import com.stark.shoot.adapter.out.persistence.mongodb.mapper.ScheduledMessageMapper
 import com.stark.shoot.application.port.`in`.message.schedule.ScheduledMessageUseCase
@@ -43,16 +44,16 @@ class ScheduledMessageService(
 
         // 채팅방 존재여부 확인
         val chatRoom = (chatRoomQueryPort.findById(roomId)
-            ?: throw ApiException("채팅방을 찾을 수 없습니다.", ErrorCode.ROOM_NOT_FOUND))
+            ?: throw ResourceNotFoundException("채팅방을 찾을 수 없습니다: roomId=$roomId"))
 
         // 사용자가 채팅방에 속해있는지 확인
         if (!chatRoom.participants.contains(senderId)) {
-            throw ApiException("채팅방에 속해있지 않습니다", ErrorCode.USER_NOT_IN_ROOM)
+            throw UnauthorizedException("채팅방에 속해있지 않습니다: userId=$senderId, roomId=$roomId")
         }
 
         // 예약 시간 검증 (현재보다 미래인지)
         if (scheduledAt.isBefore(Instant.now())) {
-            throw ApiException("예약 시간은 현재 시간 이후여야 합니다.", ErrorCode.INVALID_SCHEDULED_TIME)
+            throw InvalidInputException("예약 시간은 현재 시간 이후여야 합니다: scheduledAt=$scheduledAt")
         }
 
         // 예약 메시지 생성
@@ -77,18 +78,17 @@ class ScheduledMessageService(
 
         // 예약 메시지 존재여부 확인
         val scheduledMessage = (scheduledMessagePort.findById(scheduledMessageId.toObjectId())
-            ?: throw ApiException("예약 메시지를 찾을 수 없습니다.", ErrorCode.SCHEDULED_MESSAGE_NOT_FOUND))
+            ?: throw ResourceNotFoundException("예약 메시지를 찾을 수 없습니다: id=$scheduledMessageId"))
 
         // 본인이 예약한 메시지인지 확인
         if (scheduledMessage.senderId != userId.value) {
-            throw ApiException("본인이 예약한 메시지만 취소할 수 있습니다.", ErrorCode.SCHEDULED_MESSAGE_NOT_OWNED)
+            throw UnauthorizedException("본인이 예약한 메시지만 취소할 수 있습니다: id=$scheduledMessageId, userId=${userId.value}")
         }
 
         // 이미 처리된 메시지인지 확인
         if (scheduledMessage.status != ScheduledMessageStatus.PENDING) {
-            throw ApiException(
-                "이미 ${scheduledMessage.status} 상태의 메시지입니다.",
-                ErrorCode.SCHEDULED_MESSAGE_ALREADY_PROCESSED
+            throw IllegalStateException(
+                "이미 ${scheduledMessage.status} 상태의 메시지입니다: id=$scheduledMessageId"
             )
         }
 
@@ -106,25 +106,24 @@ class ScheduledMessageService(
 
         // 예약 메시지 조회
         val scheduledMessage = (scheduledMessagePort.findById(scheduledMessageId.toObjectId())
-            ?: throw ApiException("예약 메시지를 찾을 수 없습니다.", ErrorCode.SCHEDULED_MESSAGE_NOT_FOUND))
+            ?: throw ResourceNotFoundException("예약 메시지를 찾을 수 없습니다: id=$scheduledMessageId"))
 
         // 본인 확인
         if (scheduledMessage.senderId != userId) {
-            throw ApiException("본인이 예약한 메시지만 수정할 수 있습니다.", ErrorCode.SCHEDULED_MESSAGE_NOT_OWNED)
+            throw UnauthorizedException("본인이 예약한 메시지만 수정할 수 있습니다: id=$scheduledMessageId, userId=$userId")
         }
 
         // 이미 처리된 메시지인지 확인
         if (scheduledMessage.status != ScheduledMessageStatus.PENDING) {
-            throw ApiException(
-                "이미 ${scheduledMessage.status} 상태의 메시지입니다.",
-                ErrorCode.SCHEDULED_MESSAGE_ALREADY_PROCESSED
+            throw IllegalStateException(
+                "이미 ${scheduledMessage.status} 상태의 메시지입니다: id=$scheduledMessageId"
             )
         }
 
         // 새 예약 시간 검증 (현재보다 미래인지)
         val scheduledAt = newScheduledAt ?: scheduledMessage.scheduledAt
         if (scheduledAt.isBefore(Instant.now())) {
-            throw ApiException("예약 시간은 현재 시간 이후여야 합니다.", ErrorCode.INVALID_SCHEDULED_TIME)
+            throw InvalidInputException("예약 시간은 현재 시간 이후여야 합니다: scheduledAt=$scheduledAt")
         }
 
         // 새 내용 적용
@@ -158,18 +157,17 @@ class ScheduledMessageService(
 
         // 예약 메시지 조회
         val scheduledMessage = (scheduledMessagePort.findById(scheduledMessageId.toObjectId())
-            ?: throw ApiException("예약 메시지를 찾을 수 없습니다.", ErrorCode.SCHEDULED_MESSAGE_NOT_FOUND))
+            ?: throw ResourceNotFoundException("예약 메시지를 찾을 수 없습니다: id=$scheduledMessageId"))
 
         // 본인이 예약한 메시지인지 확인
         if (scheduledMessage.senderId != userId) {
-            throw ApiException("본인이 예약한 메시지만 전송할 수 있습니다.", ErrorCode.SCHEDULED_MESSAGE_NOT_OWNED)
+            throw UnauthorizedException("본인이 예약한 메시지만 전송할 수 있습니다: id=$scheduledMessageId, userId=$userId")
         }
 
         // 이미 처리된 메시지인지 확인
         if (scheduledMessage.status != ScheduledMessageStatus.PENDING) {
-            throw ApiException(
-                "이미 ${scheduledMessage.status} 상태의 메시지입니다.",
-                ErrorCode.SCHEDULED_MESSAGE_ALREADY_PROCESSED
+            throw IllegalStateException(
+                "이미 ${scheduledMessage.status} 상태의 메시지입니다: id=$scheduledMessageId"
             )
         }
 
