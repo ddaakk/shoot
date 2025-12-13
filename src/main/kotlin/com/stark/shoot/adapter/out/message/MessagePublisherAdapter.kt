@@ -78,10 +78,12 @@ class MessagePublisherAdapter(
                 event = event
             )
             logger.debug { "Kafka 영속화 완료: messageId=${event.messageId?.value}" }
+        } catch (e: KafkaPublishException) {
+            // Kafka 발행 실패 (네트워크, 직렬화 등)
+            logger.error(e) { "Kafka 영속화 실패: messageId=${event.messageId?.value}" }
         } catch (e: Exception) {
-            // 영속화 실패는 로그만 남기고 사용자에게는 알리지 않음
-            // 별도 모니터링 시스템에서 이를 감지하여 재처리 가능
-            logger.error(e) { "Kafka 영속화 실패 (사용자에게 영향 없음): messageId=${event.messageId?.value}" }
+            // 예상치 못한 오류
+            logger.error(e) { "예상치 못한 영속화 오류: messageId=${event.messageId?.value}" }
         }
     }
 
@@ -165,9 +167,15 @@ class MessagePublisherAdapter(
                 .also { result ->
                     logger.debug { "Kafka 메시지 발행 완료: topic=$topic, key=$key, offset=${result.recordMetadata.offset()}" }
                 }
+        } catch (ex: org.springframework.kafka.KafkaException) {
+            logger.error(ex) { "Kafka 브로커 연결 또는 발행 실패: topic=$topic, key=$key" }
+            throw KafkaPublishException("Kafka 메시지 발행 실패: ${ex.message}", ex)
+        } catch (ex: java.util.concurrent.CancellationException) {
+            logger.error(ex) { "Kafka 발행 작업 취소됨: topic=$topic, key=$key" }
+            throw KafkaPublishException("Kafka 발행 작업 취소", ex)
         } catch (ex: Exception) {
-            logger.error(ex) { "Kafka 메시지 발행 실패: topic=$topic, key=$key, ${ex.message}" }
-            throw KafkaPublishException("Kafka 메시지 발행 실패", ex)
+            logger.error(ex) { "예상치 못한 Kafka 발행 오류: topic=$topic, key=$key" }
+            throw KafkaPublishException("Kafka 발행 중 예상치 못한 오류: ${ex.message}", ex)
         }
     }
 

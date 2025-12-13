@@ -47,8 +47,30 @@ class MessagePaginationStompHandler(
                 val messages = messagesFlow.toList() // Flow를 List로 변환
                 val sendCommand = SendSyncMessagesToUserCommand.of(request, messages)
                 sendSyncMessagesToUserUseCase.sendMessagesToUser(sendCommand) // 메시지 전송
+            } catch (e: IllegalArgumentException) {
+                logger.error(e) { "잘못된 요청" }
+                messagingTemplate.convertAndSendToUser(
+                    request.userId.toString(),
+                    "/queue/errors",
+                    ErrorResponse(
+                        status = HttpStatus.BAD_REQUEST.value(),
+                        message = "잘못된 동기화 요청입니다.",
+                        timestamp = System.currentTimeMillis()
+                    )
+                )
+            } catch (e: com.mongodb.MongoException) {
+                logger.error(e) { "MongoDB 조회 실패" }
+                messagingTemplate.convertAndSendToUser(
+                    request.userId.toString(),
+                    "/queue/errors",
+                    ErrorResponse(
+                        status = HttpStatus.INTERNAL_SERVER_ERROR.value(),
+                        message = "메시지 조회 중 데이터베이스 오류가 발생했습니다.",
+                        timestamp = System.currentTimeMillis()
+                    )
+                )
             } catch (e: Exception) {
-                logger.error { "동기화 중 에러 발생" + e.message }
+                logger.error(e) { "동기화 중 예상치 못한 오류" }
                 messagingTemplate.convertAndSendToUser(
                     request.userId.toString(),
                     "/queue/errors",

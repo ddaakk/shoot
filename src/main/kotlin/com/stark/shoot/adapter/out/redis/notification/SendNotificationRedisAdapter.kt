@@ -36,8 +36,20 @@ class SendNotificationRedisAdapter(
             val result = redisTemplate.convertAndSend(channel, notificationJson)
 
             logger.info { "알림이 Redis 채널에 발행되었습니다: userId=${notification.userId.value}, type=${notification.type}, result=$result" }
+        } catch (e: com.fasterxml.jackson.core.JsonProcessingException) {
+            val errorMessage = "알림 JSON 직렬화 실패: userId=${notification.userId.value}"
+            logger.error(e) { errorMessage }
+            throw RedisOperationException(errorMessage, e)
+        } catch (e: org.springframework.data.redis.RedisConnectionFailureException) {
+            val errorMessage = "Redis 연결 실패: userId=${notification.userId.value}"
+            logger.error(e) { errorMessage }
+            throw RedisOperationException(errorMessage, e)
+        } catch (e: org.springframework.data.redis.RedisSystemException) {
+            val errorMessage = "Redis 시스템 오류: userId=${notification.userId.value}"
+            logger.error(e) { errorMessage }
+            throw RedisOperationException(errorMessage, e)
         } catch (e: Exception) {
-            val errorMessage = "Redis를 통한 알림 전송 중 오류가 발생했습니다: ${e.message}"
+            val errorMessage = "알림 전송 중 예상치 못한 오류: userId=${notification.userId.value}"
             logger.error(e) { errorMessage }
             throw RedisOperationException(errorMessage, e)
         }
@@ -72,8 +84,20 @@ class SendNotificationRedisAdapter(
 
                 logger.info { "사용자($userId)에게 ${userNotifications.size}개의 알림이 Redis 채널에 발행되었습니다." }
             }
+        } catch (e: com.fasterxml.jackson.core.JsonProcessingException) {
+            val errorMessage = "다중 알림 JSON 직렬화 실패"
+            logger.error(e) { errorMessage }
+            throw RedisOperationException(errorMessage, e)
+        } catch (e: org.springframework.data.redis.RedisConnectionFailureException) {
+            val errorMessage = "Redis 연결 실패: 다중 알림 전송"
+            logger.error(e) { errorMessage }
+            throw RedisOperationException(errorMessage, e)
+        } catch (e: org.springframework.data.redis.RedisSystemException) {
+            val errorMessage = "Redis 시스템 오류: 다중 알림 전송"
+            logger.error(e) { errorMessage }
+            throw RedisOperationException(errorMessage, e)
         } catch (e: Exception) {
-            val errorMessage = "Redis를 통한 다중 알림 전송 중 오류가 발생했습니다: ${e.message}"
+            val errorMessage = "다중 알림 전송 중 예상치 못한 오류"
             logger.error(e) { errorMessage }
             throw RedisOperationException(errorMessage, e)
         }

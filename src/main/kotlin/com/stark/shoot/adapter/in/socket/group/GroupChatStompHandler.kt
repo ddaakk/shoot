@@ -63,10 +63,14 @@ class GroupChatStompHandler(
                     logger.warn { "Unknown group chat action: ${actionDto.action}" }
                 }
             }
-        } catch (e: Exception) {
-            logger.error(e) { "Failed to handle group chat action: ${actionDto.action}" }
+        } catch (e: IllegalArgumentException) {
+            logger.error(e) { "잘못된 요청 파라미터: ${actionDto.action}" }
             // WebSocket에서는 예외를 직접 클라이언트로 전송할 수 없으므로
             // 에러 상황을 별도 채널로 전송하거나 로깅만 수행
+        } catch (e: IllegalStateException) {
+            logger.error(e) { "비즈니스 로직 오류: ${actionDto.action}" }
+        } catch (e: Exception) {
+            logger.error(e) { "예상치 못한 오류: ${actionDto.action}" }
         }
     }
 

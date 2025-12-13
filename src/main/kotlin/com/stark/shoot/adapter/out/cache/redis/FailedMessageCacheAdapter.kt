@@ -26,8 +26,14 @@ class FailedMessageCacheAdapter(
             val value = objectMapper.writeValueAsString(payload)
             redisTemplate.opsForValue().set(key, value, ttlHours, TimeUnit.HOURS)
             logger.warn { "실패한 메시지를 Redis에 저장: $key (TTL: ${ttlHours}시간)" }
+        } catch (e: com.fasterxml.jackson.core.JsonProcessingException) {
+            logger.error(e) { "JSON 직렬화 실패: $key" }
+        } catch (e: org.springframework.data.redis.RedisConnectionFailureException) {
+            logger.error(e) { "Redis 연결 실패: $key" }
+        } catch (e: org.springframework.data.redis.RedisSystemException) {
+            logger.error(e) { "Redis 시스템 오류: $key" }
         } catch (e: Exception) {
-            logger.error(e) { "Redis에 실패한 메시지 저장 중 오류 발생: $key" }
+            logger.error(e) { "예상치 못한 오류: $key" }
         }
     }
 }

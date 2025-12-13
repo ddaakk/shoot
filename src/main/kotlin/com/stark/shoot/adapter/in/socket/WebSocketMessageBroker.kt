@@ -44,16 +44,23 @@ class WebSocketMessageBroker(
                         simpMessagingTemplate.convertAndSend(destination, payload)
                     }
                     success = true
-                } catch (e: Exception) {
+                } catch (e: TimeoutCancellationException) {
                     attempt++
-                    val errorMessage = when (e) {
-                        is TimeoutCancellationException -> "WebSocket 메시지 전송 타임아웃"
-                        else -> "WebSocket 메시지 전송 실패"
-                    }
-                    logger.error(e) { "$errorMessage: $destination, 시도 횟수: $attempt" }
-                    
+                    logger.error(e) { "WebSocket 메시지 전송 타임아웃: $destination, 시도: $attempt/$retryCount" }
                     if (attempt < retryCount) {
                         delay(1000L * attempt) // 지수 백오프
+                    }
+                } catch (e: org.springframework.messaging.MessagingException) {
+                    attempt++
+                    logger.error(e) { "WebSocket 메시징 오류: $destination, 시도: $attempt/$retryCount" }
+                    if (attempt < retryCount) {
+                        delay(1000L * attempt)
+                    }
+                } catch (e: Exception) {
+                    attempt++
+                    logger.error(e) { "예상치 못한 전송 오류: $destination, 시도: $attempt/$retryCount" }
+                    if (attempt < retryCount) {
+                        delay(1000L * attempt)
                     }
                 }
             }
@@ -111,10 +118,18 @@ class WebSocketMessageBroker(
                     if (attempt < retryCount) {
                         delay(1000L * attempt) // 지수 백오프
                     }
+                } catch (e: org.springframework.messaging.MessagingException) {
+                    attempt++
+                    logger.error(e) {
+                        "WebSocket 메시징 오류: userId=$userId, destination=$destination, attempt=$attempt/$retryCount"
+                    }
+                    if (attempt < retryCount) {
+                        delay(1000L * attempt)
+                    }
                 } catch (e: Exception) {
                     attempt++
                     logger.error(e) {
-                        "사용자 메시지 전송 실패: userId=$userId, destination=$destination, attempt=$attempt/$retryCount"
+                        "예상치 못한 전송 오류: userId=$userId, destination=$destination, attempt=$attempt/$retryCount"
                     }
                     if (attempt < retryCount) {
                         delay(1000L * attempt) // 지수 백오프

@@ -41,10 +41,16 @@ class MessageReadReceiptMongoAdapter(
         // 2. 없으면 새로 저장 (중복 키 에러가 발생할 수 있음)
         return try {
             save(readReceipt)
-        } catch (e: Exception) {
+        } catch (e: org.springframework.dao.DuplicateKeyException) {
             // 3. 중복 키 에러 발생 시 (다른 요청이 동시에 저장한 경우) 다시 조회
             findByMessageIdAndUserId(readReceipt.messageId, readReceipt.userId)
-                ?: throw e // 조회도 실패하면 원래 예외를 다시 던짐
+                ?: throw IllegalStateException("중복 키 발생 후 조회 실패", e)
+        } catch (e: com.mongodb.MongoException) {
+            // MongoDB 연결 또는 쿼리 실패
+            throw IllegalStateException("읽음 표시 저장 중 MongoDB 오류 발생", e)
+        } catch (e: Exception) {
+            // 예상치 못한 오류
+            throw IllegalStateException("읽음 표시 저장 중 예상치 못한 오류 발생", e)
         }
     }
 

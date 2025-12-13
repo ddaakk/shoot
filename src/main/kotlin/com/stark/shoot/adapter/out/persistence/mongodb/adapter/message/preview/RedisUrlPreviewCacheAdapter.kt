@@ -79,14 +79,20 @@ class RedisUrlPreviewCacheAdapter(
                     localCache[url] = CacheEntry(preview)
 
                     return preview
-                } catch (e: Exception) {
+                } catch (e: com.fasterxml.jackson.core.JsonProcessingException) {
                     logger.warn { "URL 미리보기 역직렬화 실패: $url - ${e.message}" }
                     return null
                 }
             }
             return null
+        } catch (e: org.springframework.data.redis.RedisConnectionFailureException) {
+            logger.error(e) { "Redis 연결 실패: $url" }
+            return null
+        } catch (e: org.springframework.data.redis.RedisSystemException) {
+            logger.error(e) { "Redis 시스템 오류: $url" }
+            return null
         } catch (e: Exception) {
-            logger.error(e) { "URL 미리보기 조회 중 오류: $url" }
+            logger.error(e) { "예상치 못한 오류: $url" }
             return null
         }
     }
@@ -115,8 +121,14 @@ class RedisUrlPreviewCacheAdapter(
             val value = objectMapper.writeValueAsString(preview)
 
             redisTemplate.opsForValue().set(key, value, CACHE_TTL)
+        } catch (e: com.fasterxml.jackson.core.JsonProcessingException) {
+            logger.error(e) { "JSON 직렬화 실패: $url" }
+        } catch (e: org.springframework.data.redis.RedisConnectionFailureException) {
+            logger.error(e) { "Redis 연결 실패: $url" }
+        } catch (e: org.springframework.data.redis.RedisSystemException) {
+            logger.error(e) { "Redis 시스템 오류: $url" }
         } catch (e: Exception) {
-            logger.error(e) { "URL 미리보기 저장 중 오류: $url - ${e.message}" }
+            logger.error(e) { "예상치 못한 오류: $url" }
         }
     }
 

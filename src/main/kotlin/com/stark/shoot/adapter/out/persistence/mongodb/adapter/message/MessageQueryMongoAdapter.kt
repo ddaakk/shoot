@@ -236,7 +236,11 @@ class MessageQueryMongoAdapter(
             // count 쿼리는 실제 문서를 가져오지 않고 개수만 세므로 매우 빠름
             val count = mongoTemplate.count(query, "messages").toInt()
             count
+        } catch (e: com.mongodb.MongoException) {
+            // MongoDB 연결 또는 쿼리 실패
+            0
         } catch (e: Exception) {
+            // 예상치 못한 오류
             0
         }
     }
@@ -266,8 +270,11 @@ class MessageQueryMongoAdapter(
                 mongoTemplate.count(query, "messages").toInt()
             }
             results
+        } catch (e: com.mongodb.MongoException) {
+            // MongoDB 연결 또는 쿼리 실패 시 모든 사용자에 대해 0 반환
+            userIds.associateWith { 0 }
         } catch (e: Exception) {
-            // 실패 시 모든 사용자에 대해 0 반환
+            // 예상치 못한 오류 시 모든 사용자에 대해 0 반환
             userIds.associateWith { 0 }
         }
     }
@@ -312,8 +319,14 @@ class MessageQueryMongoAdapter(
 
             // Document를 Domain으로 변환
             documents.map(chatMessageMapper::toDomain)
+        } catch (e: IllegalArgumentException) {
+            // ObjectId 변환 실패 (잘못된 ID 포맷)
+            emptyList()
+        } catch (e: com.mongodb.MongoException) {
+            // MongoDB 조회 실패
+            emptyList()
         } catch (e: Exception) {
-            // ObjectId 변환 실패 시 빈 리스트 반환
+            // 예상치 못한 오류
             emptyList()
         }
     }

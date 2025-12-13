@@ -43,9 +43,15 @@ class RedisCacheInvalidationAdapter(
 
             // 친구 추천 캐시 무효화
             friendCachePort.invalidateUserCache(UserId.from(userId))
+        } catch (e: org.springframework.data.redis.RedisConnectionFailureException) {
+            // Redis 연결 실패 - 치명적이지 않으므로 경고만
+            logger.warn(e) { "Redis 연결 실패 - 캐시 삭제 건너뜀: userId=${userId.value}" }
+        } catch (e: org.springframework.data.redis.RedisSystemException) {
+            // Redis 시스템 오류 - 치명적이지 않으므로 경고만
+            logger.warn(e) { "Redis 시스템 오류 - 캐시 삭제 건너뜀: userId=${userId.value}" }
         } catch (e: Exception) {
-            // 캐시 삭제 실패는 치명적인 오류가 아니므로 로깅만 하고 계속 진행
-            logger.warn(e) { "캐시 삭제 실패: userId=${userId.value}" }
+            // 예상치 못한 오류 - 치명적이지 않으므로 경고만
+            logger.warn(e) { "캐시 삭제 중 예상치 못한 오류: userId=${userId.value}" }
         }
     }
 

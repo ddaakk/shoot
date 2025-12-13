@@ -45,10 +45,17 @@ class PublishNotificationKafkaAdapter(
                     logger.info { "알림이 Kafka 토픽에 발행되었습니다: userId=${notification.userId.value}, type=${notification.type}, offset=${result.recordMetadata.offset()}" }
                 }
             }
-        } catch (e: Exception) {
-            val errorMessage = "Kafka를 통한 알림 전송 중 오류가 발생했습니다: ${e.message}"
+        } catch (e: com.fasterxml.jackson.core.JsonProcessingException) {
+            val errorMessage = "알림 JSON 직렬화 실패: userId=${notification.userId.value}"
             logger.error(e) { errorMessage }
-            // SendNotificationPort 인터페이스에 정의된 예외를 던짐
+            throw RedisOperationException(errorMessage, e)
+        } catch (e: org.springframework.kafka.KafkaException) {
+            val errorMessage = "Kafka를 통한 알림 전송 실패: userId=${notification.userId.value}"
+            logger.error(e) { errorMessage }
+            throw RedisOperationException(errorMessage, e)
+        } catch (e: Exception) {
+            val errorMessage = "알림 전송 중 예상치 못한 오류: userId=${notification.userId.value}"
+            logger.error(e) { errorMessage }
             throw RedisOperationException(errorMessage, e)
         }
     }
@@ -73,8 +80,11 @@ class PublishNotificationKafkaAdapter(
             }
 
             logger.info { "${notifications.size}개의 알림이 Kafka 토픽에 발행되었습니다." }
+        } catch (e: RedisOperationException) {
+            // sendNotification에서 이미 처리된 예외는 재전파
+            throw e
         } catch (e: Exception) {
-            val errorMessage = "Kafka를 통한 다중 알림 전송 중 오류가 발생했습니다: ${e.message}"
+            val errorMessage = "다중 알림 전송 중 예상치 못한 오류: ${e.message}"
             logger.error(e) { errorMessage }
             throw RedisOperationException(errorMessage, e)
         }

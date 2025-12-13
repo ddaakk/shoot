@@ -60,8 +60,12 @@ class DeadLetterQueueKafkaAdapter(
                     }
                 }
             }
+        } catch (e: com.fasterxml.jackson.core.JsonProcessingException) {
+            logger.error(e) { "JSON 직렬화 실패: sagaId=${message.sagaId}" }
+        } catch (e: org.springframework.kafka.KafkaException) {
+            logger.error(e) { "Kafka 발행 실패: sagaId=${message.sagaId}" }
         } catch (e: Exception) {
-            logger.error(e) { "Exception while publishing DLQ message: sagaId=${message.sagaId}" }
+            logger.error(e) { "예상치 못한 오류: sagaId=${message.sagaId}" }
         }
     }
 }
