@@ -1,6 +1,9 @@
 package com.stark.shoot.adapter.`in`.socket.message
 
 import com.stark.shoot.adapter.`in`.rest.dto.message.ChatMessageRequest
+import com.stark.shoot.application.dto.message.MessageContentDto
+import com.stark.shoot.application.dto.message.MessageMetadataDto
+import com.stark.shoot.application.dto.message.SendMessageDto
 import com.stark.shoot.application.port.`in`.message.SendMessageUseCase
 import com.stark.shoot.application.port.`in`.message.command.SendMessageCommand
 import org.springframework.messaging.handler.annotation.MessageMapping
@@ -23,8 +26,33 @@ class MessageStompHandler(
      */
     @MessageMapping("/chat")
     fun handleChatMessage(message: ChatMessageRequest) {
-        val command = SendMessageCommand.of(message)
+        // Adapter DTO → Application DTO 변환
+        val dto = toSendMessageDto(message)
+        val command = SendMessageCommand.of(dto)
         sendMessageUseCase.sendMessage(command)
+    }
+
+    /**
+     * Adapter DTO를 Application DTO로 변환
+     *
+     * Adapter 레이어와 Application 레이어의 경계에서 변환을 수행합니다.
+     */
+    private fun toSendMessageDto(request: ChatMessageRequest): SendMessageDto {
+        return SendMessageDto(
+            tempId = request.tempId,
+            roomId = request.roomId,
+            senderId = request.senderId,
+            content = MessageContentDto(
+                text = request.content.text,
+                type = request.content.type,
+                attachments = request.content.attachments
+            ),
+            threadId = request.threadId,
+            metadata = MessageMetadataDto(
+                needsUrlPreview = request.metadata.needsUrlPreview,
+                previewUrl = request.metadata.previewUrl
+            )
+        )
     }
 
 }

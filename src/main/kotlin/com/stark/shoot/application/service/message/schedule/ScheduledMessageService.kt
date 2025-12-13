@@ -178,14 +178,11 @@ class ScheduledMessageService(
 
         // 메시지 즉시 전송 (기존 SendMessageUseCase 활용)
         try {
-            // 메시지 요청 객체 생성
-            val chatMessageRequest = createChatMessageRequest(scheduledMessage)
-
             // 도메인 메시지 객체 생성
             val chatMessage = createChatMessage(scheduledMessage)
 
-            // 메시지 발행 (Redis, Kafka)
-            messagePublisherPort.publish(chatMessageRequest, chatMessage)
+            // 메시지 발행 (Kafka)
+            messagePublisherPort.publish(chatMessage)
 
             // 상태 업데이트 및 저장
             val updatedMessage = scheduledMessage.copy(status = ScheduledMessageStatus.SENT)

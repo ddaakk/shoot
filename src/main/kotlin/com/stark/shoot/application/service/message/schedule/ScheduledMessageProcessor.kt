@@ -172,13 +172,11 @@ class ScheduledMessageProcessor(
             }
 
             // Step 2: 메시지 요청 객체 생성
-            val chatMessageRequest = createChatMessageRequest(message)
-
             // Step 3: 도메인 메시지 객체 생성
             val chatMessage = createChatMessage(message)
 
-            // Step 4: 메시지 발행 (Redis, Kafka)
-            messagePublisherPort.publish(chatMessageRequest, chatMessage)
+            // Step 4: 메시지 발행 (Kafka)
+            messagePublisherPort.publish(chatMessage)
 
             // Step 5: 상태를 SENT로 업데이트
             val updatedMessage = message.copy(status = ScheduledMessageStatus.SENT)

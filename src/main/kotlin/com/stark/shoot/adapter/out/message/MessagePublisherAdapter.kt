@@ -1,6 +1,5 @@
 package com.stark.shoot.adapter.out.message
 
-import com.stark.shoot.adapter.`in`.rest.dto.message.ChatMessageRequest
 import com.stark.shoot.adapter.`in`.rest.dto.message.MessageStatusResponse
 import com.stark.shoot.application.port.out.socket.SendWebSocketMessagePort
 import com.stark.shoot.application.port.out.message.MessagePublisherPort
@@ -46,10 +45,9 @@ class MessagePublisherAdapter(
      *
      * Kafka Consumer에서 MongoDB 저장 및 WebSocket 브로드캐스트를 처리합니다.
      *
-     * @param request 메시지 요청 DTO
      * @param domainMessage 도메인 메시지
      */
-    override fun publish(request: ChatMessageRequest, domainMessage: ChatMessage) {
+    override fun publish(domainMessage: ChatMessage) {
         applicationCoroutineScope.launch {
             try {
                 // Kafka로 메시지 발행 (단일 경로)
@@ -59,7 +57,8 @@ class MessagePublisherAdapter(
 
             } catch (throwable: Throwable) {
                 // 실패 시 오류 처리
-                handlePublishError(request, request.tempId.orEmpty(), throwable)
+                val tempId = domainMessage.metadata.tempId.orEmpty()
+                handlePublishError(domainMessage, tempId, throwable)
             }
         }
     }
@@ -90,9 +89,10 @@ class MessagePublisherAdapter(
     /**
      * 메시지 처리 중 발생한 오류를 공통으로 처리합니다.
      */
-    override fun handleProcessingError(request: ChatMessageRequest, throwable: Throwable) {
+    override fun handleProcessingError(domainMessage: ChatMessage, throwable: Throwable) {
         // 공통 오류 처리 로직 재사용
-        handlePublishError(request, request.tempId.orEmpty(), throwable)
+        val tempId = domainMessage.metadata.tempId.orEmpty()
+        handlePublishError(domainMessage, tempId, throwable)
     }
 
     /**
@@ -133,24 +133,25 @@ class MessagePublisherAdapter(
 
     /**
      * 메시지 발행 중 오류를 처리합니다.
-     * - Redis Stream에 발행 실패 시 로그 기록
      * - Kafka 영속화 실패 시 로그 기록
      * - 상태 업데이트 및 오류 알림
      */
     private fun handlePublishError(
-        message: ChatMessageRequest,
+        domainMessage: ChatMessage,
         tempId: String,
         throwable: Throwable
     ) {
         // 로그 기록
-        logger.error(throwable) { "메시지 처리 실패: roomId=${message.roomId}, content=${message.content.text}" }
+        logger.error(throwable) {
+            "메시지 처리 실패: roomId=${domainMessage.roomId.value}, content=${domainMessage.content.text}"
+        }
 
         // 오류 알림
-        notifyMessageError(message.roomId, throwable)
+        notifyMessageError(domainMessage.roomId.value, throwable)
 
         // 상태 업데이트 (tempId가 있는 경우만)
         tempId.takeIf { it.isNotEmpty() }?.let {
-            notifyMessageStatus(message.roomId, it, MessageStatus.FAILED, throwable.message)
+            notifyMessageStatus(domainMessage.roomId.value, it, MessageStatus.FAILED, throwable.message)
         }
     }
 
