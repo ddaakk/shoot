@@ -78,4 +78,22 @@ interface MessageReactionQueryPort {
      * @return 리액션 타입별 개수 맵
      */
     fun getReactionSummary(messageId: MessageId): Map<ReactionType, Long>
+
+    /**
+     * 여러 메시지의 리액션 요약을 배치로 조회
+     * N+1 쿼리 문제를 방지하기 위한 배치 조회
+     *
+     * @param messageIds 메시지 ID 목록
+     * @return 메시지 ID별 리액션 타입별 개수 맵
+     */
+    fun getReactionSummaryBatch(messageIds: List<MessageId>): Map<MessageId, Map<ReactionType, Long>>
+
+    /**
+     * 여러 메시지의 리액션을 배치로 조회하여 사용자 ID 목록 반환
+     * N+1 쿼리 문제를 방지하기 위한 배치 조회
+     *
+     * @param messageIds 메시지 ID 목록
+     * @return 메시지 ID별 리액션 타입 코드별 사용자 ID 집합
+     */
+    fun getReactionsWithUsersBatch(messageIds: List<MessageId>): Map<MessageId, Map<String, Set<Long>>>
 }

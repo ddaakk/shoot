@@ -19,6 +19,7 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.toList
 import org.springframework.messaging.simp.SimpMessagingTemplate
 import java.time.Instant
 
@@ -29,6 +30,7 @@ import java.time.Instant
 class PaginationMessageSyncService(
     private val messageQueryPort: MessageQueryPort,
     private val threadQueryPort: ThreadQueryPort,
+    private val messageReactionQueryPort: com.stark.shoot.application.port.out.message.reaction.MessageReactionQueryPort,
     private val messagingTemplate: SimpMessagingTemplate,
     private val messageSyncMapper: MessageSyncMapper
 ) : SendSyncMessagesToUserUseCase, GetPaginationMessageUseCase {
@@ -51,22 +53,38 @@ class PaginationMessageSyncService(
         val request = command.request
         val messageFlow = getMessageFlowByDirection(request)
 
-        // 메시지를 DTOs로 변환
-        messageFlow
+        // 1. 모든 메시지를 먼저 수집 (배치 쿼리를 위해)
+        val messages = messageFlow
             .catch { e ->
                 logger.error(e) { "메시지 동기화 중 오류 발생: roomId=${request.roomId}, userId=${request.userId}" }
                 throw e
             }
-            .collect { message ->
-                val replyCount = if (message.threadId == null && message.id != null) {
-                    threadQueryPort.countByThreadId(message.id)
-                } else {
-                    null
-                }
-                // TODO: MessageReactionQueryPort를 통해 reactions 조회 필요
-                // 현재는 성능상의 이유로 빈 맵 전달 (필요 시 별도 API로 조회)
-                emit(messageSyncMapper.toSyncInfoDto(message, emptyMap(), replyCount))
+            .toList()
+
+        // 2. 메시지 ID 목록 추출 (null 제외)
+        val messageIds = messages.mapNotNull { it.id }
+
+        // 3. 배치로 리액션 조회 (N+1 쿼리 방지)
+        // 리액션 타입별 사용자 ID 집합을 조회
+        val reactionsByMessageId = if (messageIds.isNotEmpty()) {
+            messageReactionQueryPort.getReactionsWithUsersBatch(messageIds)
+        } else {
+            emptyMap()
+        }
+
+        // 4. 메시지를 DTOs로 변환하여 emit
+        messages.forEach { message ->
+            val replyCount = if (message.threadId == null && message.id != null) {
+                threadQueryPort.countByThreadId(message.id)
+            } else {
+                null
             }
+
+            // 메시지의 리액션 조회 (없으면 빈 맵)
+            val reactions = message.id?.let { reactionsByMessageId[it] } ?: emptyMap()
+
+            emit(messageSyncMapper.toSyncInfoDto(message, reactions, replyCount))
+        }
     }
 
     /**

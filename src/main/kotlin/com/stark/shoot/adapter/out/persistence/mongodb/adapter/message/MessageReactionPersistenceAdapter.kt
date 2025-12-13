@@ -102,4 +102,43 @@ class MessageReactionPersistenceAdapter(
             .mapKeys { (typeStr, _) -> ReactionType.valueOf(typeStr) }
             .mapValues { (_, docs) -> docs.size.toLong() }
     }
+
+    override fun getReactionSummaryBatch(messageIds: List<MessageId>): Map<MessageId, Map<ReactionType, Long>> {
+        if (messageIds.isEmpty()) return emptyMap()
+
+        // 모든 메시지의 리액션을 한 번의 쿼리로 조회
+        val messageIdStrings = messageIds.map { it.value }
+        val reactions = repository.findAllByMessageIdIn(messageIdStrings)
+
+        // 메시지 ID별로 그룹화하고 각 메시지의 리액션 타입별 개수 집계
+        return reactions
+            .groupBy { it.messageId }
+            .mapKeys { (messageIdStr, _) -> MessageId.from(messageIdStr) }
+            .mapValues { (_, docs) ->
+                docs
+                    .groupBy { it.reactionType }
+                    .mapKeys { (typeStr, _) -> ReactionType.valueOf(typeStr) }
+                    .mapValues { (_, typeDocs) -> typeDocs.size.toLong() }
+            }
+    }
+
+    override fun getReactionsWithUsersBatch(messageIds: List<MessageId>): Map<MessageId, Map<String, Set<Long>>> {
+        if (messageIds.isEmpty()) return emptyMap()
+
+        // 모든 메시지의 리액션을 한 번의 쿼리로 조회
+        val messageIdStrings = messageIds.map { it.value }
+        val reactions = repository.findAllByMessageIdIn(messageIdStrings)
+
+        // 메시지 ID별로 그룹화하고 각 메시지의 리액션 타입별 사용자 ID 집합 생성
+        return reactions
+            .groupBy { it.messageId }
+            .mapKeys { (messageIdStr, _) -> MessageId.from(messageIdStr) }
+            .mapValues { (_, docs) ->
+                docs
+                    .groupBy { it.reactionType }
+                    .mapValues { (_, typeDocs) ->
+                        typeDocs.map { it.userId }.toSet()
+                    }
+            }
+    }
 }

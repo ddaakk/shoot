@@ -86,4 +86,13 @@ interface MessageReactionRepository : MongoRepository<MessageReactionDocument, S
         """
     )
     fun findReactionsByMessageId(messageId: String): List<MessageReactionDocument>
+
+    /**
+     * 여러 메시지의 리액션을 배치로 조회
+     * N+1 쿼리 문제를 방지하기 위한 배치 조회
+     *
+     * @param messageIds 메시지 ID 목록
+     * @return 리액션 목록
+     */
+    fun findAllByMessageIdIn(messageIds: List<String>): List<MessageReactionDocument>
 }
