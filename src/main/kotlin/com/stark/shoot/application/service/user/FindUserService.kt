@@ -6,6 +6,7 @@ import com.stark.shoot.application.port.`in`.user.command.FindUserByIdCommand
 import com.stark.shoot.application.port.`in`.user.command.FindUserByUsernameCommand
 import com.stark.shoot.application.port.out.user.UserQueryPort
 import com.stark.shoot.domain.user.User
+import com.stark.shoot.domain.user.vo.Nickname
 import com.stark.shoot.infrastructure.annotation.UseCase
 
 @UseCase
@@ -41,5 +42,15 @@ class FindUserService(
      */
     override fun findByUserCode(command: FindUserByCodeCommand): User? {
         return userQueryPort.findByUserCode(command.userCode)
+    }
+
+    /**
+     * 닉네임 존재 여부 확인
+     *
+     * @param nickname 확인할 닉네임
+     * @return 닉네임이 이미 존재하면 true
+     */
+    override fun existsByNickname(nickname: Nickname): Boolean {
+        return userQueryPort.existsByNickname(nickname)
     }
 }

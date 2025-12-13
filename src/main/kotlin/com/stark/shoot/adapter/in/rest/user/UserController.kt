@@ -99,12 +99,21 @@ class UserController(
     )
     @GetMapping("/check/nickname/{nickname}")
     fun checkNicknameAvailability(@PathVariable nickname: String): ResponseDto<Map<String, Boolean>> {
-        // TODO: FindUserByNicknameCommand 구현 필요
-        // 임시로 항상 사용 가능하다고 반환
-        return ResponseDto.success(
-            mapOf("available" to true),
-            "사용 가능한 닉네임입니다."
-        )
+        val nicknameVO = com.stark.shoot.domain.user.vo.Nickname.from(nickname)
+        val exists = findUserUseCase.existsByNickname(nicknameVO)
+        val available = !exists
+
+        return if (available) {
+            ResponseDto.success(
+                mapOf("available" to true),
+                "사용 가능한 닉네임입니다."
+            )
+        } else {
+            ResponseDto.success(
+                mapOf("available" to false),
+                "이미 사용 중인 닉네임입니다."
+            )
+        }
     }
 
 }

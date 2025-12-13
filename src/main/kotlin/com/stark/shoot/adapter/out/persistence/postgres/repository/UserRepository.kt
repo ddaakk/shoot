@@ -9,6 +9,7 @@ import org.springframework.data.repository.query.Param
 interface UserRepository : JpaRepository<UserEntity, Long> {
     fun findByUsername(username: String): UserEntity?
     fun findByUserCode(userCode: String): UserEntity?
+    fun existsByNickname(nickname: String): Boolean
 
     @Modifying
     @Query("UPDATE UserEntity u SET u.userCode = :userCode WHERE u.id = :userId")

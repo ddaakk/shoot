@@ -77,6 +77,16 @@ class UserQueryPersistenceAdapter(
     }
 
     /**
+     * 닉네임으로 사용자 존재 여부 확인
+     *
+     * @param nickname 확인할 닉네임
+     * @return 닉네임이 이미 존재하면 true
+     */
+    override fun existsByNickname(nickname: com.stark.shoot.domain.user.vo.Nickname): Boolean {
+        return userRepository.existsByNickname(nickname.value)
+    }
+
+    /**
      * 사용자 ID 존재 여부 확인
      *
      * @param userId 사용자 ID

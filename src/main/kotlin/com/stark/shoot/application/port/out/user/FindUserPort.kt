@@ -13,6 +13,15 @@ interface FindUserPort {
     fun existsById(userId: UserId): Boolean
 
     /**
+     * 닉네임으로 사용자 존재 여부 확인
+     * 닉네임 중복 체크 시 사용
+     *
+     * @param nickname 확인할 닉네임
+     * @return 닉네임이 이미 존재하면 true, 사용 가능하면 false
+     */
+    fun existsByNickname(nickname: com.stark.shoot.domain.user.vo.Nickname): Boolean
+
+    /**
      * 여러 사용자 ID의 존재 여부를 배치로 확인
      * N+1 쿼리 문제를 방지하기 위한 배치 검증
      *
