@@ -1,9 +1,9 @@
 package com.stark.shoot.application.service.admin.outbox
 
-import com.stark.shoot.adapter.out.persistence.postgres.repository.OutboxDeadLetterRepository
 import com.stark.shoot.application.port.`in`.admin.outbox.GetOutboxDeadLetterStatsUseCase
 import com.stark.shoot.application.port.`in`.admin.outbox.result.EventTypeStatsResult
 import com.stark.shoot.application.port.`in`.admin.outbox.result.OutboxDeadLetterStatsResult
+import com.stark.shoot.application.port.out.saga.OutboxDeadLetterPort
 import com.stark.shoot.infrastructure.annotation.UseCase
 import java.time.Instant
 
@@ -14,13 +14,13 @@ import java.time.Instant
  */
 @UseCase
 class GetOutboxDeadLetterStatsService(
-    private val deadLetterRepository: OutboxDeadLetterRepository
+    private val deadLetterPort: OutboxDeadLetterPort
 ) : GetOutboxDeadLetterStatsUseCase {
 
     override fun getDLQStats(): OutboxDeadLetterStatsResult {
-        val unresolvedCount = deadLetterRepository.countByResolvedFalse()
-        val last24hCount = deadLetterRepository.countDLQSince(Instant.now().minusSeconds(24 * 3600))
-        val failuresByType = deadLetterRepository.getFailureStatsByEventType()
+        val unresolvedCount = deadLetterPort.countUnresolved()
+        val last24hCount = deadLetterPort.countSince(Instant.now().minusSeconds(24 * 3600))
+        val failuresByType = deadLetterPort.getFailureStatsByEventType()
 
         return OutboxDeadLetterStatsResult(
             unresolvedCount = unresolvedCount,

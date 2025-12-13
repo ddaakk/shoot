@@ -1,11 +1,11 @@
 package com.stark.shoot.application.service.admin.outbox
 
 import com.stark.shoot.adapter.out.persistence.postgres.entity.OutboxDeadLetterEntity
-import com.stark.shoot.adapter.out.persistence.postgres.repository.OutboxDeadLetterRepository
 import com.stark.shoot.application.port.`in`.admin.outbox.GetOutboxDeadLettersUseCase
 import com.stark.shoot.application.port.`in`.admin.outbox.command.GetOutboxDeadLetterCommand
 import com.stark.shoot.application.port.`in`.admin.outbox.command.GetOutboxDeadLettersCommand
 import com.stark.shoot.application.port.`in`.admin.outbox.result.OutboxDeadLetterResult
+import com.stark.shoot.application.port.out.saga.OutboxDeadLetterPort
 import com.stark.shoot.infrastructure.annotation.UseCase
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.PageRequest
@@ -18,7 +18,7 @@ import org.springframework.data.domain.Sort
  */
 @UseCase
 class GetOutboxDeadLettersService(
-    private val deadLetterRepository: OutboxDeadLetterRepository
+    private val deadLetterPort: OutboxDeadLetterPort
 ) : GetOutboxDeadLettersUseCase {
 
     override fun getUnresolvedDLQ(command: GetOutboxDeadLettersCommand): Page<OutboxDeadLetterResult> {
@@ -27,23 +27,21 @@ class GetOutboxDeadLettersService(
             command.size,
             Sort.by(Sort.Direction.DESC, "createdAt")
         )
-        return deadLetterRepository.findByResolvedFalse(pageable)
+        return deadLetterPort.findUnresolvedDLQ(pageable)
             .map { toResult(it) }
     }
 
     override fun getDLQById(command: GetOutboxDeadLetterCommand): OutboxDeadLetterResult? {
-        return deadLetterRepository.findById(command.id)
-            .map { toResult(it) }
-            .orElse(null)
+        return deadLetterPort.findById(command.id)?.let { toResult(it) }
     }
 
     override fun getDLQBySagaId(sagaId: String): List<OutboxDeadLetterResult> {
-        return deadLetterRepository.findBySagaIdOrderByCreatedAtDesc(sagaId)
+        return deadLetterPort.findBySagaId(sagaId)
             .map { toResult(it) }
     }
 
     override fun getRecentDLQ(): List<OutboxDeadLetterResult> {
-        return deadLetterRepository.findTop10ByResolvedFalseOrderByCreatedAtDesc()
+        return deadLetterPort.findRecentUnresolvedDLQ()
             .map { toResult(it) }
     }
 

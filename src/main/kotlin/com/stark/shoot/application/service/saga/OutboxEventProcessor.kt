@@ -3,9 +3,9 @@ package com.stark.shoot.application.service.saga
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.stark.shoot.adapter.out.persistence.postgres.entity.OutboxDeadLetterEntity
 import com.stark.shoot.adapter.out.persistence.postgres.entity.OutboxEventEntity
-import com.stark.shoot.adapter.out.persistence.postgres.repository.OutboxDeadLetterRepository
 import com.stark.shoot.application.port.out.event.EventPublishPort
 import com.stark.shoot.application.port.out.notification.SlackNotificationPort
+import com.stark.shoot.application.port.out.saga.OutboxDeadLetterPort
 import com.stark.shoot.application.port.out.saga.OutboxEventPort
 import com.stark.shoot.domain.saga.SagaState
 import com.stark.shoot.domain.shared.event.DomainEvent
@@ -46,7 +46,7 @@ import java.time.temporal.ChronoUnit
 @Service
 class OutboxEventProcessor(
     private val outboxEventPort: OutboxEventPort,
-    private val deadLetterRepository: OutboxDeadLetterRepository,
+    private val deadLetterPort: OutboxDeadLetterPort,
     private val eventPublisher: EventPublishPort,
     private val slackNotificationPort: SlackNotificationPort,
     private val objectMapper: ObjectMapper
@@ -145,7 +145,7 @@ class OutboxEventProcessor(
             )
 
             // DLQ에 저장
-            deadLetterRepository.save(dlqEvent)
+            deadLetterPort.save(dlqEvent)
 
             // 원본 이벤트는 처리 완료로 표시 (더 이상 재시도 안 함)
             outboxEvent.markAsProcessed()
@@ -219,10 +219,10 @@ class OutboxEventProcessor(
     fun cleanupOldDLQ() {
         try {
             val threshold = Instant.now().minus(DLQ_RETENTION_DAYS, ChronoUnit.DAYS)
-            val oldDLQEvents = deadLetterRepository.findOldResolvedDLQ(threshold)
+            val oldDLQEvents = deadLetterPort.findOldResolvedDLQ(threshold)
 
             if (oldDLQEvents.isNotEmpty()) {
-                deadLetterRepository.deleteAll(oldDLQEvents)
+                deadLetterPort.deleteAll(oldDLQEvents)
                 logger.info { "DLQ 정리 완료: ${oldDLQEvents.size}개 삭제" }
             }
 
@@ -244,10 +244,10 @@ class OutboxEventProcessor(
     @Transactional(readOnly = true)
     fun monitorUnresolvedDLQ() {
         try {
-            val unresolvedCount = deadLetterRepository.countByResolvedFalse()
+            val unresolvedCount = deadLetterPort.countUnresolved()
 
             if (unresolvedCount > 0) {
-                val recentDLQ = deadLetterRepository.findTop10ByResolvedFalseOrderByCreatedAtDesc()
+                val recentDLQ = deadLetterPort.findRecentUnresolvedDLQ()
 
                 val recentDLQInfo = recentDLQ.joinToString("\n") {
                     "id=${it.id}, sagaId=${it.sagaId}, eventType=${it.eventType}, reason=${it.failureReason}"
