@@ -1,6 +1,6 @@
 package com.stark.shoot.application.service.event.mention
 
-import com.stark.shoot.adapter.`in`.socket.WebSocketMessageBroker
+import com.stark.shoot.application.port.out.socket.SendWebSocketMessagePort
 import com.stark.shoot.domain.shared.event.MentionEvent
 import com.stark.shoot.domain.shared.event.EventVersion
 import com.stark.shoot.domain.shared.event.EventVersionValidator
@@ -12,7 +12,7 @@ import java.util.concurrent.atomic.AtomicInteger
 
 @ApplicationEventListener
 class MentionEventListener(
-    private val webSocketMessageBroker: WebSocketMessageBroker
+    private val sendWebSocketMessagePort: SendWebSocketMessagePort
 ) {
 
     private val logger = KotlinLogging.logger {}
@@ -40,7 +40,7 @@ class MentionEventListener(
 
         event.mentionedUserIds.forEach { userId ->
             // 개별 사용자에게 멘션 알림 전송
-            webSocketMessageBroker.sendMessage(
+            sendWebSocketMessagePort.sendMessage(
                 "/topic/user/${userId.value}/notifications",
                 mentionNotification,
                 retryCount = 2 // 멘션은 중요한 알림이므로 재시도

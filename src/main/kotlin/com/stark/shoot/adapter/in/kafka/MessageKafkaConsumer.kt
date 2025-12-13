@@ -1,6 +1,6 @@
 package com.stark.shoot.adapter.`in`.kafka
 
-import com.stark.shoot.adapter.`in`.socket.WebSocketMessageBroker
+import com.stark.shoot.application.port.out.socket.SendWebSocketMessagePort
 import com.stark.shoot.application.port.`in`.message.HandleMessageEventUseCase
 import com.stark.shoot.domain.shared.event.MessageEvent
 import com.stark.shoot.domain.shared.event.type.EventType
@@ -19,7 +19,7 @@ import org.springframework.stereotype.Component
 @Component
 class MessageKafkaConsumer(
     private val handleMessageEventUseCase: HandleMessageEventUseCase,
-    private val webSocketMessageBroker: WebSocketMessageBroker
+    private val sendWebSocketMessagePort: SendWebSocketMessagePort
 ) {
 
     private val logger = KotlinLogging.logger {}
@@ -78,7 +78,7 @@ class MessageKafkaConsumer(
                 "createdAt" to event.createdAt.toString()
             )
 
-            webSocketMessageBroker.sendMessage(
+            sendWebSocketMessagePort.sendMessage(
                 "/topic/messages/$roomId",
                 messageData
             )

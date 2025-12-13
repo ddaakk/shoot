@@ -2,7 +2,7 @@ package com.stark.shoot.adapter.out.message
 
 import com.stark.shoot.adapter.`in`.rest.dto.message.ChatMessageRequest
 import com.stark.shoot.adapter.`in`.rest.dto.message.MessageStatusResponse
-import com.stark.shoot.adapter.`in`.socket.WebSocketMessageBroker
+import com.stark.shoot.application.port.out.socket.SendWebSocketMessagePort
 import com.stark.shoot.application.port.out.message.MessagePublisherPort
 import com.stark.shoot.application.port.out.message.MessageStatusNotificationPort
 import com.stark.shoot.domain.chat.message.ChatMessage
@@ -25,7 +25,7 @@ import java.time.Instant
 @Adapter
 class MessagePublisherAdapter(
     private val kafkaTemplate: KafkaTemplate<String, MessageEvent>,
-    private val webSocketMessageBroker: WebSocketMessageBroker,
+    private val sendWebSocketMessagePort: SendWebSocketMessagePort,
     private val applicationCoroutineScope: ApplicationCoroutineScope,
     private val messageDomainService: MessageDomainService
 ) : MessagePublisherPort, MessageStatusNotificationPort {
@@ -111,7 +111,7 @@ class MessagePublisherAdapter(
             errorMessage = errorMessage,
             createdAt = Instant.now().toString()
         ).let { statusUpdate ->
-            webSocketMessageBroker.sendMessage("/topic/message/status/$roomId", statusUpdate)
+            sendWebSocketMessagePort.sendMessage("/topic/message/status/$roomId", statusUpdate)
         }
     }
 
@@ -127,7 +127,7 @@ class MessagePublisherAdapter(
             message = throwable.message ?: "메시지 처리 중 오류가 발생했습니다",
             timestamp = System.currentTimeMillis()
         ).let { errorResponse ->
-            webSocketMessageBroker.sendMessage("/topic/errors/$roomId", errorResponse)
+            sendWebSocketMessagePort.sendMessage("/topic/errors/$roomId", errorResponse)
         }
     }
 

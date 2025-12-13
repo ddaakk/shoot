@@ -1,6 +1,6 @@
 package com.stark.shoot.application.service.message
 
-import com.stark.shoot.adapter.`in`.socket.WebSocketMessageBroker
+import com.stark.shoot.application.port.out.socket.SendWebSocketMessagePort
 import com.stark.shoot.adapter.`in`.socket.dto.TypingIndicatorMessage
 import com.stark.shoot.application.port.`in`.message.TypingIndicatorMessageUseCase
 import com.stark.shoot.application.port.`in`.message.command.TypingIndicatorCommand
@@ -13,7 +13,7 @@ import java.util.concurrent.ConcurrentHashMap
 
 @UseCase
 class TypingIndicatorMessagesService(
-    private val webSocketMessageBroker: WebSocketMessageBroker,
+    private val sendWebSocketMessagePort: SendWebSocketMessagePort,
     private val redisUtilService: RedisUtilService,
 ) : TypingIndicatorMessageUseCase {
 
@@ -206,7 +206,7 @@ class TypingIndicatorMessagesService(
      * @param message 전송할 타이핑 인디케이터 메시지
      */
     private fun sendTypingMessage(destination: String, message: TypingIndicatorMessage) {
-        webSocketMessageBroker.sendMessage(
+        sendWebSocketMessagePort.sendMessage(
             destination,
             message
         ).exceptionally { throwable ->

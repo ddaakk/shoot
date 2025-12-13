@@ -1,6 +1,6 @@
 package com.stark.shoot.application.service.message.pin
 
-import com.stark.shoot.adapter.`in`.socket.WebSocketMessageBroker
+import com.stark.shoot.application.port.out.socket.SendWebSocketMessagePort
 import com.stark.shoot.application.port.`in`.message.pin.MessagePinUseCase
 import com.stark.shoot.application.port.`in`.message.pin.command.PinMessageCommand
 import com.stark.shoot.application.port.`in`.message.pin.command.UnpinMessageCommand
@@ -29,7 +29,7 @@ class MessagePinService(
     private val messagePinCommandPort: MessagePinCommandPort,
     private val messagePinQueryPort: MessagePinQueryPort,
     private val chatRoomQueryPort: ChatRoomQueryPort,
-    private val webSocketMessageBroker: WebSocketMessageBroker,
+    private val sendWebSocketMessagePort: SendWebSocketMessagePort,
     private val eventPublisher: EventPublishPort,
     private val messagePinDomainService: MessagePinDomainService,
     private val chatRoomConstants: ChatRoomConstants
@@ -153,7 +153,7 @@ class MessagePinService(
             "timestamp" to Instant.now().toString()
         )
 
-        webSocketMessageBroker.sendMessage(
+        sendWebSocketMessagePort.sendMessage(
             "/topic/pins/$roomId",
             pinStatusData
         )

@@ -1,6 +1,6 @@
 package com.stark.shoot.application.service.event.reaction
 
-import com.stark.shoot.adapter.`in`.socket.WebSocketMessageBroker
+import com.stark.shoot.application.port.out.socket.SendWebSocketMessagePort
 import com.stark.shoot.domain.shared.event.MessageReactionEvent
 import com.stark.shoot.domain.shared.event.EventVersion
 import com.stark.shoot.domain.shared.event.EventVersionValidator
@@ -11,7 +11,7 @@ import org.springframework.transaction.event.TransactionalEventListener
 
 @ApplicationEventListener
 class ReactionEventListener(
-    private val webSocketMessageBroker: WebSocketMessageBroker
+    private val sendWebSocketMessagePort: SendWebSocketMessagePort
 ) {
 
     private val logger = KotlinLogging.logger {}
@@ -33,7 +33,7 @@ class ReactionEventListener(
         )
 
         // 채팅방의 모든 사용자에게 반응 업데이트 전송
-        webSocketMessageBroker.sendMessage(
+        sendWebSocketMessagePort.sendMessage(
             "/topic/chat/${event.roomId.value}/reactions",
             reactionUpdate,
             retryCount = 1 // 반응은 실시간성이 중요하므로 재시도 최소화

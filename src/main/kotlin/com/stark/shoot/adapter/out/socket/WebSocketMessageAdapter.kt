@@ -1,7 +1,9 @@
-package com.stark.shoot.adapter.`in`.socket
+package com.stark.shoot.adapter.out.socket
 
 import com.stark.shoot.adapter.`in`.rest.dto.message.MessageStatusResponse
 import com.stark.shoot.application.port.out.message.FailedMessageCachePort
+import com.stark.shoot.application.port.out.socket.SendWebSocketMessagePort
+import com.stark.shoot.infrastructure.annotation.Adapter
 import com.stark.shoot.infrastructure.config.async.ApplicationCoroutineScope
 import io.github.oshai.kotlinlogging.KotlinLogging
 import jakarta.annotation.PreDestroy
@@ -9,21 +11,32 @@ import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withTimeout
 import org.springframework.messaging.simp.SimpMessagingTemplate
-import org.springframework.stereotype.Component
 import java.util.concurrent.CompletableFuture
 
-@Component
-class WebSocketMessageBroker(
+/**
+ * WebSocket 메시지 발신 Adapter
+ *
+ * SendWebSocketMessagePort를 구현하여 서버에서 클라이언트로
+ * WebSocket 메시지를 전송합니다.
+ *
+ * 기능:
+ * - 재시도 로직 (지수 백오프)
+ * - 타임아웃 처리
+ * - 실패 시 Redis 캐싱
+ */
+@Adapter
+class WebSocketMessageAdapter(
     private val simpMessagingTemplate: SimpMessagingTemplate,
     private val failedMessageCachePort: FailedMessageCachePort,
     private val coroutineScope: ApplicationCoroutineScope
-) {
+) : SendWebSocketMessagePort {
+
     private val logger = KotlinLogging.logger {}
     private val MESSAGE_SEND_TIMEOUT = 5000L
 
     @PreDestroy
     fun onApplicationShutdown() {
-        logger.info { "애플리케이션 종료: WebSocket 메시지 브로커 리소스 정리 중..." }
+        logger.info { "애플리케이션 종료: WebSocket 메시지 어댑터 리소스 정리 중..." }
         shutdown()
     }
 
@@ -31,7 +44,7 @@ class WebSocketMessageBroker(
      * WebSocket을 통해 메시지를 전송합니다.
      * 실패 시 재시도 후 Redis에 저장합니다.
      */
-    fun sendMessage(destination: String, payload: Any, retryCount: Int = 3): CompletableFuture<Boolean> {
+    override fun sendMessage(destination: String, payload: Any, retryCount: Int): CompletableFuture<Boolean> {
         val result = CompletableFuture<Boolean>()
 
         coroutineScope.launch {
@@ -89,11 +102,11 @@ class WebSocketMessageBroker(
      * 특정 사용자에게 메시지 전송
      * 재시도 로직과 지수 백오프 적용
      */
-    fun sendToUser(
+    override fun sendToUser(
         userId: String,
         destination: String,
         payload: Any,
-        retryCount: Int = 3
+        retryCount: Int
     ): CompletableFuture<Boolean> {
         val result = CompletableFuture<Boolean>()
 
@@ -138,7 +151,7 @@ class WebSocketMessageBroker(
             }
 
             result.complete(success)
-            
+
             if (success) {
                 logger.debug { "사용자에게 메시지 전송 완료: userId=$userId, destination=$destination" }
             } else {
@@ -155,8 +168,7 @@ class WebSocketMessageBroker(
         return result
     }
 
-    fun shutdown() {
-        logger.info { "WebSocket 메시지 브로커 종료" }
+    private fun shutdown() {
+        logger.info { "WebSocket 메시지 어댑터 종료" }
     }
-
 }

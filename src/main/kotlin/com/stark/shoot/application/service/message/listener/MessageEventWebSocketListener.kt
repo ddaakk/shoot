@@ -1,6 +1,6 @@
 package com.stark.shoot.application.service.message.listener
 
-import com.stark.shoot.adapter.`in`.socket.WebSocketMessageBroker
+import com.stark.shoot.application.port.out.socket.SendWebSocketMessagePort
 import com.stark.shoot.application.port.out.message.MessageQueryPort
 import com.stark.shoot.domain.shared.event.MessageDeletedEvent
 import com.stark.shoot.domain.shared.event.MessageEditedEvent
@@ -32,7 +32,7 @@ import org.springframework.stereotype.Component
  */
 @Component
 class MessageEventWebSocketListener(
-    private val webSocketMessageBroker: WebSocketMessageBroker,
+    private val sendWebSocketMessagePort: SendWebSocketMessagePort,
     private val messageQueryPort: MessageQueryPort
 ) {
     private val logger = KotlinLogging.logger {}
@@ -57,13 +57,13 @@ class MessageEventWebSocketListener(
             }
 
             // 채팅방의 모든 참여자에게 메시지 편집 알림
-            webSocketMessageBroker.sendMessage(
+            sendWebSocketMessagePort.sendMessage(
                 "/topic/message/edit/${event.roomId.value}",
                 message
             )
 
             // 요청자에게 성공 응답 전송
-            webSocketMessageBroker.sendMessage(
+            sendWebSocketMessagePort.sendMessage(
                 "/queue/message/edit/response/${event.userId.value}",
                 WebSocketResponseBuilder.success(message, "메시지가 수정되었습니다.")
             )
@@ -102,13 +102,13 @@ class MessageEventWebSocketListener(
             }
 
             // 채팅방의 모든 참여자에게 메시지 삭제 알림
-            webSocketMessageBroker.sendMessage(
+            sendWebSocketMessagePort.sendMessage(
                 "/topic/message/delete/${event.roomId.value}",
                 message
             )
 
             // 요청자에게 성공 응답 전송
-            webSocketMessageBroker.sendMessage(
+            sendWebSocketMessagePort.sendMessage(
                 "/queue/message/delete/response/${event.userId.value}",
                 WebSocketResponseBuilder.success(message, "메시지가 삭제되었습니다.")
             )

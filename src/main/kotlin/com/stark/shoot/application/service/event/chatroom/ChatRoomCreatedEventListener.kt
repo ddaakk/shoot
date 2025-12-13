@@ -1,6 +1,6 @@
 package com.stark.shoot.application.service.event.chatroom
 
-import com.stark.shoot.adapter.`in`.socket.WebSocketMessageBroker
+import com.stark.shoot.application.port.out.socket.SendWebSocketMessagePort
 import com.stark.shoot.application.port.out.chatroom.ChatRoomQueryPort
 import com.stark.shoot.domain.shared.event.ChatRoomCreatedEvent
 import com.stark.shoot.domain.shared.event.EventVersion
@@ -13,7 +13,7 @@ import org.springframework.transaction.event.TransactionalEventListener
 @ApplicationEventListener
 class ChatRoomCreatedEventListener(
     private val chatRoomQueryPort: ChatRoomQueryPort,
-    private val webSocketMessageBroker: WebSocketMessageBroker
+    private val sendWebSocketMessagePort: SendWebSocketMessagePort
 ) {
 
     private val logger = KotlinLogging.logger {}
@@ -49,7 +49,7 @@ class ChatRoomCreatedEventListener(
         // 모든 참여자에게 새 채팅방 생성 알림 전송
         chatRoom.participants.forEach { participantId ->
             try {
-                webSocketMessageBroker.sendMessage(
+                sendWebSocketMessagePort.sendMessage(
                     "/topic/user/${participantId.value}/chatrooms/new",
                     chatRoomInfo,
                     retryCount = 2

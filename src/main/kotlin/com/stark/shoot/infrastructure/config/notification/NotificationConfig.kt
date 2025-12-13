@@ -4,8 +4,8 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.stark.shoot.adapter.out.kafka.PublishNotificationKafkaAdapter
 import com.stark.shoot.adapter.out.redis.notification.SendNotificationRedisAdapter
 import com.stark.shoot.adapter.out.socket.notification.SendNotificationWebSocketAdapter
-import com.stark.shoot.adapter.`in`.socket.WebSocketMessageBroker
 import com.stark.shoot.application.port.out.notification.SendNotificationPort
+import com.stark.shoot.application.port.out.socket.SendWebSocketMessagePort
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
@@ -40,11 +40,11 @@ class NotificationConfig {
         @Value("\${notification.transport:redis}") notificationTransport: String,
         redisTemplate: StringRedisTemplate,
         kafkaTemplate: KafkaTemplate<String, String>,
-        webSocketMessageBroker: WebSocketMessageBroker,
+        sendWebSocketMessagePort: SendWebSocketMessagePort,
         objectMapper: ObjectMapper
     ): SendNotificationPort {
         logger.info { "알림 전송 방식: $notificationTransport" }
-        
+
         return when (notificationTransport.lowercase()) {
             "kafka" -> {
                 logger.info { "Kafka를 사용하여 알림을 전송합니다." }
@@ -52,7 +52,7 @@ class NotificationConfig {
             }
             "websocket" -> {
                 logger.info { "WebSocket을 사용하여 알림을 전송합니다." }
-                SendNotificationWebSocketAdapter(webSocketMessageBroker)
+                SendNotificationWebSocketAdapter(sendWebSocketMessagePort)
             }
             else -> {
                 logger.info { "Redis를 사용하여 알림을 전송합니다." }
@@ -95,8 +95,8 @@ class NotificationConfig {
 
     @Bean("websocketNotificationSender")
     fun websocketNotificationSender(
-        webSocketMessageBroker: WebSocketMessageBroker
+        sendWebSocketMessagePort: SendWebSocketMessagePort
     ): SendNotificationPort {
-        return SendNotificationWebSocketAdapter(webSocketMessageBroker)
+        return SendNotificationWebSocketAdapter(sendWebSocketMessagePort)
     }
 }

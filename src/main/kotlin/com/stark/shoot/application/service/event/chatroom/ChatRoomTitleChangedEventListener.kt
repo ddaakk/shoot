@@ -1,6 +1,6 @@
 package com.stark.shoot.application.service.event.chatroom
 
-import com.stark.shoot.adapter.`in`.socket.WebSocketMessageBroker
+import com.stark.shoot.application.port.out.socket.SendWebSocketMessagePort
 import com.stark.shoot.application.port.out.chatroom.ChatRoomQueryPort
 import com.stark.shoot.application.port.out.user.UserQueryPort
 import com.stark.shoot.domain.shared.event.ChatRoomTitleChangedEvent
@@ -15,7 +15,7 @@ import org.springframework.transaction.event.TransactionalEventListener
 class ChatRoomTitleChangedEventListener(
     private val chatRoomQueryPort: ChatRoomQueryPort,
     private val userQueryPort: UserQueryPort,
-    private val webSocketMessageBroker: WebSocketMessageBroker
+    private val sendWebSocketMessagePort: SendWebSocketMessagePort
 ) {
 
     private val logger = KotlinLogging.logger {}
@@ -63,7 +63,7 @@ class ChatRoomTitleChangedEventListener(
 
         chatRoom.participants.forEach { participantId ->
             // 채팅방 내 제목 변경 알림
-            webSocketMessageBroker.sendMessage(
+            sendWebSocketMessagePort.sendMessage(
                 "/topic/chat/${event.roomId.value}/title",
                 titleChangeNotification,
                 retryCount = 1
@@ -83,7 +83,7 @@ class ChatRoomTitleChangedEventListener(
                 "lastActiveAt" to chatRoom.lastActiveAt.toString()
             )
 
-            webSocketMessageBroker.sendMessage(
+            sendWebSocketMessagePort.sendMessage(
                 "/topic/user/${participantId.value}/chatrooms/update",
                 chatRoomListUpdate,
                 retryCount = 2

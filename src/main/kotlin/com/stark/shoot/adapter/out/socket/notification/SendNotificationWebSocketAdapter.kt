@@ -1,14 +1,14 @@
 package com.stark.shoot.adapter.out.socket.notification
 
-import com.stark.shoot.adapter.`in`.socket.WebSocketMessageBroker
 import com.stark.shoot.application.port.out.notification.SendNotificationPort
+import com.stark.shoot.application.port.out.socket.SendWebSocketMessagePort
 import com.stark.shoot.domain.notification.Notification
 import com.stark.shoot.infrastructure.annotation.Adapter
 import io.github.oshai.kotlinlogging.KotlinLogging
 
 @Adapter
 class SendNotificationWebSocketAdapter(
-    private val webSocketMessageBroker: WebSocketMessageBroker
+    private val sendWebSocketMessagePort: SendWebSocketMessagePort
 ) : SendNotificationPort {
 
     private val logger = KotlinLogging.logger {}
@@ -25,7 +25,7 @@ class SendNotificationWebSocketAdapter(
      */
     override fun sendNotification(notification: Notification) {
         try {
-            webSocketMessageBroker.sendToUser(
+            sendWebSocketMessagePort.sendToUser(
                 notification.userId.value.toString(),
                 USER_DESTINATION,
                 notification

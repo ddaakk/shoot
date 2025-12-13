@@ -1,6 +1,6 @@
 package com.stark.shoot.application.service.event.message
 
-import com.stark.shoot.adapter.`in`.socket.WebSocketMessageBroker
+import com.stark.shoot.application.port.out.socket.SendWebSocketMessagePort
 import com.stark.shoot.application.port.out.chatroom.ChatRoomQueryPort
 import com.stark.shoot.application.port.out.message.MessageQueryPort
 import com.stark.shoot.application.acl.*
@@ -18,7 +18,7 @@ import org.springframework.transaction.event.TransactionalEventListener
 class MessageSentEventListener(
     private val chatRoomQueryPort: ChatRoomQueryPort,
     private val messageQueryPort: MessageQueryPort,
-    private val webSocketMessageBroker: WebSocketMessageBroker
+    private val sendWebSocketMessagePort: SendWebSocketMessagePort
 ) {
 
     private val logger = KotlinLogging.logger {}
@@ -76,7 +76,7 @@ class MessageSentEventListener(
 
                 // 개별 사용자에게 채팅방 목록 업데이트 전송
                 // 비동기 전송으로 성능 최적화
-                webSocketMessageBroker.sendMessage(
+                sendWebSocketMessagePort.sendMessage(
                     "/topic/user/${participantId.value}/chatrooms",
                     chatRoomUpdate,
                     retryCount = 2 // 채팅방 목록 업데이트는 재시도 횟수 축소

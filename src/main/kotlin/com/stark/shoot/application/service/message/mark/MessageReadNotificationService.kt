@@ -1,6 +1,6 @@
 package com.stark.shoot.application.service.message.mark
 
-import com.stark.shoot.adapter.`in`.socket.WebSocketMessageBroker
+import com.stark.shoot.application.port.out.socket.SendWebSocketMessagePort
 import com.stark.shoot.domain.chat.message.vo.MessageId
 import com.stark.shoot.domain.chat.vo.ChatRoomId
 import com.stark.shoot.domain.shared.event.MessageBulkReadEvent
@@ -15,7 +15,7 @@ import org.springframework.stereotype.Component
  */
 @Component
 class MessageReadNotificationService(
-    private val webSocketMessageBroker: WebSocketMessageBroker
+    private val sendWebSocketMessagePort: SendWebSocketMessagePort
 ) {
     private val logger = KotlinLogging.logger {}
 
@@ -32,7 +32,7 @@ class MessageReadNotificationService(
         userId: UserId
     ) {
         try {
-            webSocketMessageBroker.sendMessage(
+            sendWebSocketMessagePort.sendMessage(
                 "/topic/read/${roomId.value}",
                 mapOf(
                     "messageId" to messageId.value,
@@ -63,7 +63,7 @@ class MessageReadNotificationService(
         }
 
         try {
-            webSocketMessageBroker.sendMessage(
+            sendWebSocketMessagePort.sendMessage(
                 "/topic/read-bulk/${roomId.value}",
                 MessageBulkReadEvent.create(roomId, messageIds, userId)
             )

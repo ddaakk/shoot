@@ -1,7 +1,7 @@
 package com.stark.shoot.application.service.message.reaction
 
 import com.stark.shoot.adapter.`in`.rest.dto.message.reaction.ReactionResponse
-import com.stark.shoot.adapter.`in`.socket.WebSocketMessageBroker
+import com.stark.shoot.application.port.out.socket.SendWebSocketMessagePort
 import com.stark.shoot.application.port.`in`.message.reaction.ToggleMessageReactionUseCase
 import com.stark.shoot.application.port.`in`.message.reaction.command.ToggleMessageReactionCommand
 import com.stark.shoot.application.port.out.event.EventPublishPort
@@ -34,7 +34,7 @@ class ToggleMessageReactionService(
     private val messageQueryPort: MessageQueryPort,
     private val messageReactionQueryPort: MessageReactionQueryPort,
     private val messageReactionCommandPort: MessageReactionCommandPort,
-    private val webSocketMessageBroker: WebSocketMessageBroker,
+    private val sendWebSocketMessagePort: SendWebSocketMessagePort,
     private val eventPublisher: EventPublishPort,
     private val redisLockManager: RedisLockManager
 ) : ToggleMessageReactionUseCase {
@@ -129,7 +129,7 @@ class ToggleMessageReactionService(
                     }
 
                 // 채팅방의 모든 참여자에게 반응 변경 알림
-                webSocketMessageBroker.sendMessage(
+                sendWebSocketMessagePort.sendMessage(
                     "/topic/message/reaction/${message.roomId.value}",
                     mapOf(
                         "messageId" to command.messageId.value,
@@ -169,14 +169,14 @@ class ToggleMessageReactionService(
     }
 
     private fun sendSuccessResponse(userId: UserId, message: String, data: ReactionResponse) {
-        webSocketMessageBroker.sendMessage(
+        sendWebSocketMessagePort.sendMessage(
             "/queue/message/reaction/response/${userId.value}",
             WebSocketResponseBuilder.success(data, message)
         )
     }
 
     private fun sendErrorResponse(userId: UserId, message: String) {
-        webSocketMessageBroker.sendMessage(
+        sendWebSocketMessagePort.sendMessage(
             "/queue/message/reaction/response/${userId.value}",
             WebSocketResponseBuilder.error(message)
         )

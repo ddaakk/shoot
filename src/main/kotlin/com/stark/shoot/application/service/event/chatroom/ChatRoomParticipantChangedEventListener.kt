@@ -1,6 +1,6 @@
 package com.stark.shoot.application.service.event.chatroom
 
-import com.stark.shoot.adapter.`in`.socket.WebSocketMessageBroker
+import com.stark.shoot.application.port.out.socket.SendWebSocketMessagePort
 import com.stark.shoot.application.port.out.chatroom.ChatRoomQueryPort
 import com.stark.shoot.application.port.out.user.UserQueryPort
 import com.stark.shoot.domain.shared.event.ChatRoomParticipantChangedEvent
@@ -15,7 +15,7 @@ import org.springframework.transaction.event.TransactionalEventListener
 class ChatRoomParticipantChangedEventListener(
     private val chatRoomQueryPort: ChatRoomQueryPort,
     private val userQueryPort: UserQueryPort,
-    private val webSocketMessageBroker: WebSocketMessageBroker
+    private val sendWebSocketMessagePort: SendWebSocketMessagePort
 ) {
 
     private val logger = KotlinLogging.logger {}
@@ -77,7 +77,7 @@ class ChatRoomParticipantChangedEventListener(
         )
 
         chatRoom.participants.forEach { participantId ->
-            webSocketMessageBroker.sendMessage(
+            sendWebSocketMessagePort.sendMessage(
                 "/topic/chat/${event.roomId.value}/participants",
                 participantUpdate,
                 retryCount = 1
@@ -104,7 +104,7 @@ class ChatRoomParticipantChangedEventListener(
                 "timestamp" to event.occurredOn
             )
 
-            webSocketMessageBroker.sendMessage(
+            sendWebSocketMessagePort.sendMessage(
                 "/topic/user/${newParticipantId.value}/notifications",
                 welcomeMessage,
                 retryCount = 2
@@ -134,7 +134,7 @@ class ChatRoomParticipantChangedEventListener(
                 "timestamp" to event.occurredOn
             )
 
-            webSocketMessageBroker.sendMessage(
+            sendWebSocketMessagePort.sendMessage(
                 "/topic/user/${removedParticipantId.value}/notifications",
                 goodbyeMessage,
                 retryCount = 1
