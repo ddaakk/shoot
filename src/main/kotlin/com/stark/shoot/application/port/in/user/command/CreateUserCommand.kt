@@ -10,17 +10,19 @@ data class CreateUserCommand(
     val nickname: Nickname,
     val password: String,
     val email: String,
-    val bio: UserBio?
+    val bio: UserBio?,
+    val profileImageUrl: String? = null
 ) {
 
     companion object {
-        fun of(request: CreateUserRequest): CreateUserCommand {
+        fun of(request: CreateUserRequest, profileImageUrl: String? = null): CreateUserCommand {
             return CreateUserCommand(
                 username = Username.from(request.username),
                 nickname = Nickname.from(request.nickname),
                 password = request.password,
                 email = request.email,
-                bio = request.bio?.let { UserBio.from(it) }
+                bio = request.bio?.let { UserBio.from(it) },
+                profileImageUrl = profileImageUrl
             )
         }
     }
