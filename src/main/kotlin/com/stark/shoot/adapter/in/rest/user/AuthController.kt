@@ -10,6 +10,7 @@ import com.stark.shoot.application.port.`in`.user.auth.command.LoginCommand
 import com.stark.shoot.application.port.`in`.user.auth.command.RetrieveUserDetailsCommand
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.tags.Tag
+import jakarta.validation.Valid
 import org.springframework.security.core.Authentication
 import org.springframework.web.bind.annotation.*
 
@@ -27,7 +28,7 @@ class AuthController(
     )
     @PostMapping("/login")
     fun login(
-        @RequestBody request: LoginRequest
+        @Valid @RequestBody request: LoginRequest
     ): ResponseDto<LoginResponse> {
         val command = LoginCommand.of(request.username, request.password)
         val response = userLoginUseCase.login(command)

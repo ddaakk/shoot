@@ -3,6 +3,7 @@ package com.stark.shoot.infrastructure.config.security
 import com.stark.shoot.infrastructure.config.jwt.JwtProvider
 import jakarta.servlet.http.HttpServletResponse
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
+import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.security.authentication.AuthenticationManager
@@ -20,10 +21,12 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource
 
 @Configuration
 @EnableMethodSecurity(prePostEnabled = true)
+@EnableConfigurationProperties(CorsProperties::class)
 @ConditionalOnProperty(name = ["security.enabled"], havingValue = "true", matchIfMissing = true)
 class SecurityConfig(
     private val jwtAuthFilter: JwtAuthFilter,
-    private val jwtProvider: JwtProvider
+    private val jwtProvider: JwtProvider,
+    private val corsProperties: CorsProperties
 ) {
 
     @Bean
@@ -51,48 +54,20 @@ class SecurityConfig(
 
     /**
      * CORS 설정
-     * - 프론트엔드 URL을 명시적으로 허용
-     * - 필요한 HTTP 메서드만 허용
-     * - 필요한 헤더만 명시적으로 허용
-     * - 자격 증명(쿠키, Authorization 헤더 등)을 허용
-     * - 캐시 시간 설정
+     * - application.yml의 cors 설정을 사용
+     * - 환경별로 다른 설정 가능 (local, dev, prod)
+     * - 빈 문자열은 필터링하여 제외
      */
     @Bean
     fun corsConfigurationSource(): CorsConfigurationSource {
         val configuration = CorsConfiguration().apply {
-            // 프론트엔드 URL을 명시적으로 허용
-            // 환경에 따라 다른 URL 추가 (개발, 스테이징, 프로덕션)
-            allowedOrigins = listOf(
-                "http://localhost:3000",  // 로컬 개발 환경
-                // 필요에 따라 추가 URL 설정
-                // "https://your-production-domain.com"
-            )
-
-            // 필요한 HTTP 메서드만 허용
-            allowedMethods = listOf("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH")
-
-            // 필요한 헤더만 명시적으로 허용
-            allowedHeaders = listOf(
-                "Authorization", 
-                "Content-Type", 
-                "Accept", 
-                "X-Requested-With",
-                "Cache-Control",
-                "Access-Control-Allow-Origin",
-                "Access-Control-Allow-Headers"
-            )
-
-            // 브라우저가 접근할 수 있는 헤더 설정
-            exposedHeaders = listOf(
-                "Authorization",
-                "Content-Disposition"
-            )
-
-            // 자격 증명(쿠키, Authorization 헤더 등)을 허용
-            allowCredentials = true
-
-            // 브라우저가 CORS 설정을 캐시하는 시간 (1시간)
-            maxAge = 3600L
+            // 빈 문자열을 제외하고 설정
+            allowedOrigins = corsProperties.allowedOrigins.filter { it.isNotBlank() }
+            allowedMethods = corsProperties.allowedMethods
+            allowedHeaders = corsProperties.allowedHeaders
+            exposedHeaders = corsProperties.exposedHeaders
+            allowCredentials = corsProperties.allowCredentials
+            maxAge = corsProperties.maxAge
         }
 
         val source = UrlBasedCorsConfigurationSource()
@@ -146,11 +121,12 @@ class SecurityConfig(
                 it.requestMatchers("/ws/**").permitAll()
                 it.requestMatchers("/api/v1/auth/refresh-token").permitAll()
 
-                // Swagger UI 경로 허용
+                // Swagger UI 경로 허용 (개발 환경에서만 사용 권장)
+                // TODO: 프로덕션 환경에서는 Swagger 비활성화 또는 인증 필요
                 it.requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**", "/swagger-resources/**", "/webjars/**").permitAll()
 
-                // Admin API 경로 허용 (내부 모니터링용)
-                it.requestMatchers("/api/admin/**").permitAll()
+                // Admin API - 인증 및 ADMIN 권한 필요
+                it.requestMatchers("/api/admin/**").hasRole("ADMIN")
 
                 it.requestMatchers("/api/v1/users/me").authenticated()
                 it.requestMatchers("/api/v1/messages/mark-read").authenticated() // 명시적 인증 필요

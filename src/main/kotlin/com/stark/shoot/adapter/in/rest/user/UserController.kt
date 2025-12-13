@@ -11,6 +11,7 @@ import com.stark.shoot.application.port.`in`.user.command.CreateUserCommand
 import com.stark.shoot.application.port.`in`.user.command.DeleteUserCommand
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.tags.Tag
+import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.security.core.Authentication
@@ -31,7 +32,7 @@ class UserController(
     )
     @ResponseStatus(HttpStatus.CREATED)
     @PostMapping(consumes = [MediaType.APPLICATION_JSON_VALUE])
-    fun createUser(@RequestBody request: CreateUserRequest): ResponseDto<UserResponse> {
+    fun createUser(@Valid @RequestBody request: CreateUserRequest): ResponseDto<UserResponse> {
         val command = CreateUserCommand.of(request)
         val user = userCreateUseCase.createUser(command)
         return ResponseDto.success(user.toResponse(), "회원가입이 완료되었습니다.")
@@ -43,7 +44,7 @@ class UserController(
     )
     @ResponseStatus(HttpStatus.CREATED)
     @PostMapping(consumes = [MediaType.MULTIPART_FORM_DATA_VALUE])
-    fun createUserWithImage(@ModelAttribute request: CreateUserMultipartRequest): ResponseDto<UserResponse> {
+    fun createUserWithImage(@Valid @ModelAttribute request: CreateUserMultipartRequest): ResponseDto<UserResponse> {
         // CreateUserMultipartRequest를 CreateUserRequest로 변환하여 기존 로직 재사용
         val simpleRequest = CreateUserRequest(
             username = request.username,

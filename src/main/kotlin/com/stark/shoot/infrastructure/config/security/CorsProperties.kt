@@ -1,0 +1,13 @@
+package com.stark.shoot.infrastructure.config.security
+
+import org.springframework.boot.context.properties.ConfigurationProperties
+
+@ConfigurationProperties(prefix = "cors")
+data class CorsProperties(
+    val allowedOrigins: List<String> = emptyList(),
+    val allowedMethods: List<String> = emptyList(),
+    val allowedHeaders: List<String> = emptyList(),
+    val exposedHeaders: List<String> = emptyList(),
+    val allowCredentials: Boolean = true,
+    val maxAge: Long = 3600
+)
