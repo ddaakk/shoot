@@ -4,7 +4,17 @@ import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.media.Content
 import org.springframework.web.multipart.MultipartFile
 
+// JSON용 요청 DTO (MultipartFile 없음)
 data class CreateUserRequest(
+    val username: String,
+    val nickname: String,
+    val password: String,
+    val email: String,
+    val bio: String? = null
+)
+
+// Multipart용 요청 DTO (MultipartFile 포함)
+data class CreateUserMultipartRequest(
     val username: String,
     val nickname: String,
     val password: String,

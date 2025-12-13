@@ -142,6 +142,7 @@ class SecurityConfig(
                 // 인증이 필요하지 않은 경로
                 // 로그인, 회원가입 등은 permitAll
                 it.requestMatchers("/api/v1/auth/login", "/api/v1/users", "/api/v1/chatrooms/updates/**").permitAll()
+                it.requestMatchers("/api/v1/users/check/**").permitAll() // 중복 체크 API
                 it.requestMatchers("/ws/**").permitAll()
                 it.requestMatchers("/api/v1/auth/refresh-token").permitAll()
 

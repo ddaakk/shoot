@@ -41,7 +41,7 @@ class UserCreateService(
                     ?: throw IllegalStateException("Password encoding failed")
             },
             bio = command.bio?.value,
-            profileImageUrl = command.profileImage?.toString()
+            profileImageUrl = null  // 프로필 이미지는 별도 처리 필요
         )
 
         // 영속성 계층을 통해 사용자 저장

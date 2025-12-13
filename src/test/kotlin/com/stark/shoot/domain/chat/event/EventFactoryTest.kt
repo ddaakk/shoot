@@ -73,15 +73,12 @@ class EventFactoryTest {
     @DisplayName("[happy] MessageReactionEvent create 함수는 주어진 값으로 이벤트를 생성한다")
     fun `MessageReactionEvent create 함수는 주어진 값으로 이벤트를 생성한다`() {
         val event = MessageReactionEvent.create(MessageId.from("m1"), ChatRoomId.from(1L), UserId.from(2L), "like", true)
-        assertThat(event).isEqualTo(
-            MessageReactionEvent(
-                messageId = MessageId.from("m1"),
-                roomId = ChatRoomId.from(1L),
-                userId = UserId.from(2L),
-                reactionType = "like",
-                isAdded = true,
-                isReplacement = false
-            )
-        )
+        // occurredOn과 version은 자동 생성되므로 개별 필드만 검증
+        assertThat(event.messageId).isEqualTo(MessageId.from("m1"))
+        assertThat(event.roomId).isEqualTo(ChatRoomId.from(1L))
+        assertThat(event.userId).isEqualTo(UserId.from(2L))
+        assertThat(event.reactionType).isEqualTo("like")
+        assertThat(event.isAdded).isTrue()
+        assertThat(event.isReplacement).isFalse()
     }
 }

@@ -23,7 +23,8 @@ class UserControllerTest {
 
     private val userCreateUseCase = mock(UserCreateUseCase::class.java)
     private val userDeleteUseCase = mock(UserDeleteUseCase::class.java)
-    private val controller = UserController(userCreateUseCase, userDeleteUseCase)
+    private val findUserUseCase = mock(com.stark.shoot.application.port.`in`.user.FindUserUseCase::class.java)
+    private val controller = UserController(userCreateUseCase, userDeleteUseCase, findUserUseCase)
 
     @Test
     @DisplayName("[happy] 사용자 생성 요청을 처리하고 생성된 사용자를 반환한다")
@@ -35,20 +36,12 @@ class UserControllerTest {
         val email = "test@example.com"
         val bio = "This is a test user"
 
-        val profileImage = MockMultipartFile(
-            "profileImage",
-            "test-image.jpg",
-            MediaType.IMAGE_JPEG_VALUE,
-            "test image content".toByteArray()
-        )
-
         val request = CreateUserRequest(
             username = username,
             nickname = nickname,
             password = password,
             email = email,
-            bio = bio,
-            profileImage = profileImage
+            bio = bio
         )
 
         val command = CreateUserCommand.of(request)

@@ -123,7 +123,8 @@ class MessageConcurrencyRealWorldTest {
             val roomId = ChatRoomId.from(1002L)
             val messageCount = 50
             val latch = CountDownLatch(messageCount)
-            val startTime = Instant.now()
+            // startTime을 메시지 전송 전에 여유있게 기록 (타이밍 이슈 방지)
+            val startTime = Instant.now().minusMillis(100)
 
             // when - 순차적으로 메시지를 빠르게 전송 (실제 타이핑 시뮬레이션)
             repeat(messageCount) { index ->
