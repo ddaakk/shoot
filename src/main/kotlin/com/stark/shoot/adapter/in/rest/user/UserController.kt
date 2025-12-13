@@ -24,8 +24,7 @@ import org.springframework.web.bind.annotation.*
 class UserController(
     private val userCreateUseCase: UserCreateUseCase,
     private val userDeleteUseCase: UserDeleteUseCase,
-    private val findUserUseCase: com.stark.shoot.application.port.`in`.user.FindUserUseCase,
-    private val fileStoragePort: com.stark.shoot.application.port.out.storage.FileStoragePort
+    private val findUserUseCase: com.stark.shoot.application.port.`in`.user.FindUserUseCase
 ) {
 
     @Operation(
@@ -47,20 +46,7 @@ class UserController(
     @ResponseStatus(HttpStatus.CREATED)
     @PostMapping(consumes = [MediaType.MULTIPART_FORM_DATA_VALUE])
     fun createUserWithImage(@Valid @ModelAttribute request: CreateUserMultipartRequest): ResponseDto<UserResponse> {
-        // 프로필 이미지 업로드 처리
-        val profileImageUrl = if (request.profileImage != null && !request.profileImage.isEmpty) {
-            try {
-                fileStoragePort.store(request.profileImage, "profile")
-            } catch (e: Exception) {
-                // 프로필 이미지 업로드 실패 시에도 회원가입은 진행
-                // TODO: 에러 로깅 및 사용자에게 알림
-                null
-            }
-        } else {
-            null
-        }
-
-        // CreateUserMultipartRequest를 CreateUserRequest로 변환하여 기존 로직 재사용
+        // CreateUserMultipartRequest를 CreateUserRequest로 변환
         val simpleRequest = CreateUserRequest(
             username = request.username,
             nickname = request.nickname,
@@ -68,7 +54,9 @@ class UserController(
             email = request.email,
             bio = request.bio
         )
-        val command = CreateUserCommand.of(simpleRequest, profileImageUrl)
+
+        // MultipartFile을 Command에 전달 (파일 업로드 처리는 Service에서)
+        val command = CreateUserCommand.of(simpleRequest, request.profileImage)
         val user = userCreateUseCase.createUser(command)
         return ResponseDto.success(user.toResponse(), "회원가입이 완료되었습니다.")
     }

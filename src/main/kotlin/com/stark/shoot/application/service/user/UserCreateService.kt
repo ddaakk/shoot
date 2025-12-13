@@ -17,7 +17,8 @@ import java.time.Instant
 class UserCreateService(
     private val userCommandPort: UserCommandPort,
     private val passwordEncoder: PasswordEncoder,
-    private val eventPublisher: EventPublishPort
+    private val eventPublisher: EventPublishPort,
+    private val fileStoragePort: com.stark.shoot.application.port.out.storage.FileStoragePort
 ) : UserCreateUseCase {
 
     private val logger = KotlinLogging.logger {}
@@ -31,6 +32,19 @@ class UserCreateService(
     override fun createUser(
         command: CreateUserCommand
     ): User {
+        // 프로필 이미지 업로드 처리
+        val profileImageUrl = if (command.profileImage != null && !command.profileImage.isEmpty) {
+            try {
+                fileStoragePort.store(command.profileImage, "profile")
+            } catch (e: Exception) {
+                // 프로필 이미지 업로드 실패 시에도 회원가입은 진행
+                logger.error(e) { "프로필 이미지 업로드 실패: username=${command.username.value}" }
+                null
+            }
+        } else {
+            null
+        }
+
         // 도메인 팩토리 메서드를 사용하여 사용자 생성
         val user = User.create(
             username = command.username.value,
@@ -41,7 +55,7 @@ class UserCreateService(
                     ?: throw IllegalStateException("Password encoding failed")
             },
             bio = command.bio?.value,
-            profileImageUrl = command.profileImageUrl
+            profileImageUrl = profileImageUrl
         )
 
         // 영속성 계층을 통해 사용자 저장
