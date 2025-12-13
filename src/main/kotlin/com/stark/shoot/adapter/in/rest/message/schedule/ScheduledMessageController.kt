@@ -3,7 +3,7 @@ package com.stark.shoot.adapter.`in`.rest.message.schedule
 import com.stark.shoot.adapter.`in`.rest.dto.ResponseDto
 import com.stark.shoot.adapter.`in`.rest.dto.message.schedule.ScheduleMessageRequest
 import com.stark.shoot.adapter.`in`.rest.dto.message.schedule.ScheduleMessageSendNowRequest
-import com.stark.shoot.adapter.`in`.rest.dto.message.schedule.ScheduledMessageResponseDto
+import com.stark.shoot.application.dto.message.schedule.ScheduledMessageResponseDto
 import com.stark.shoot.application.port.`in`.message.schedule.ScheduledMessageUseCase
 import com.stark.shoot.application.port.`in`.message.schedule.command.*
 import io.swagger.v3.oas.annotations.Operation

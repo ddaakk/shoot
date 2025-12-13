@@ -1,7 +1,5 @@
 package com.stark.shoot.adapter.out.persistence.mongodb.mapper
 
-import com.stark.shoot.adapter.`in`.rest.dto.message.MessageContentResponseDto
-import com.stark.shoot.adapter.`in`.rest.dto.message.schedule.ScheduledMessageResponseDto
 import com.stark.shoot.adapter.out.persistence.mongodb.document.message.ScheduledMessageDocument
 import com.stark.shoot.adapter.out.persistence.mongodb.document.message.embedded.MessageContentDocument
 import com.stark.shoot.domain.chat.message.ScheduledMessage
@@ -75,28 +73,5 @@ class ScheduledMessageMapper() {
         )
     }
 
-    /**
-     * ScheduledMessage를 ScheduledMessageResponseDto로 변환
-     */
-    fun toScheduledMessageResponseDto(domain: ScheduledMessage): ScheduledMessageResponseDto {
-        val messageId = domain.id?.toString()
-            ?: throw IllegalStateException("Scheduled message ID should not be null when converting to response")
-
-        return ScheduledMessageResponseDto(
-            id = messageId,
-            roomId = domain.roomId,
-            senderId = domain.senderId,
-            content = MessageContentResponseDto(
-                text = domain.content.text,
-                type = domain.content.type,
-                isEdited = domain.content.isEdited,
-                isDeleted = domain.content.isDeleted
-            ),
-            scheduledAt = domain.scheduledAt,
-            createdAt = domain.createdAt,
-            status = domain.status,
-            metadata = domain.metadata.toMessageMetadataResponseDto()
-        )
-    }
 
 }

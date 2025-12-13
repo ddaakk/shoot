@@ -1,8 +1,7 @@
 package com.stark.shoot.adapter.`in`.rest.message.schedule
 
-import com.stark.shoot.adapter.`in`.rest.dto.message.MessageContentResponseDto
-import com.stark.shoot.adapter.`in`.rest.dto.message.MessageMetadataResponseDto
-import com.stark.shoot.adapter.`in`.rest.dto.message.schedule.ScheduledMessageResponseDto
+import com.stark.shoot.application.dto.message.schedule.ScheduledMessageContentDto
+import com.stark.shoot.application.dto.message.schedule.ScheduledMessageResponseDto
 import com.stark.shoot.adapter.`in`.rest.dto.message.schedule.ScheduleMessageRequest
 import com.stark.shoot.adapter.`in`.rest.dto.message.schedule.ScheduleMessageSendNowRequest
 import com.stark.shoot.application.port.`in`.message.schedule.ScheduledMessageUseCase
@@ -219,7 +218,7 @@ class ScheduledMessageControllerTest {
             id = id,
             roomId = roomId,
             senderId = senderId,
-            content = MessageContentResponseDto(
+            content = ScheduledMessageContentDto(
                 text = content,
                 type = MessageType.TEXT,
                 isEdited = false,
@@ -227,8 +226,7 @@ class ScheduledMessageControllerTest {
             ),
             scheduledAt = scheduledAt,
             createdAt = now,
-            status = status,
-            metadata = MessageMetadataResponseDto()
+            status = status
         )
     }
 }

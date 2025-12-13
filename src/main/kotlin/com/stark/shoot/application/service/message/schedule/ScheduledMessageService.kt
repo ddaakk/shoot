@@ -3,8 +3,8 @@ package com.stark.shoot.application.service.message.schedule
 import com.stark.shoot.infrastructure.exception.web.InvalidInputException
 import com.stark.shoot.infrastructure.exception.web.ResourceNotFoundException
 import com.stark.shoot.infrastructure.exception.web.UnauthorizedException
-import com.stark.shoot.adapter.`in`.rest.dto.message.schedule.ScheduledMessageResponseDto
-import com.stark.shoot.adapter.out.persistence.mongodb.mapper.ScheduledMessageMapper
+import com.stark.shoot.application.dto.message.schedule.ScheduledMessageResponseDto
+import com.stark.shoot.application.mapper.message.schedule.ScheduledMessageDtoMapper
 import com.stark.shoot.application.port.`in`.message.schedule.ScheduledMessageUseCase
 import com.stark.shoot.application.port.`in`.message.schedule.command.*
 import com.stark.shoot.application.port.out.chatroom.ChatRoomQueryPort
@@ -30,7 +30,7 @@ import java.util.UUID
 class ScheduledMessageService(
     private val scheduledMessagePort: ScheduledMessagePort,
     private val chatRoomQueryPort: ChatRoomQueryPort,
-    private val scheduledMessageMapper: ScheduledMessageMapper,
+    private val scheduledMessageDtoMapper: ScheduledMessageDtoMapper,
     private val messagePublisherPort: MessagePublisherPort,
 ) : ScheduledMessageUseCase {
 
@@ -69,7 +69,7 @@ class ScheduledMessageService(
 
         // 예약 메시지 저장 후 반환
         val saveScheduledMessage = scheduledMessagePort.saveScheduledMessage(scheduledMessage)
-        return scheduledMessageMapper.toScheduledMessageResponseDto(saveScheduledMessage)
+        return scheduledMessageDtoMapper.toDto(saveScheduledMessage)
     }
 
     override fun cancelScheduledMessage(command: CancelScheduledMessageCommand): ScheduledMessageResponseDto {
@@ -95,7 +95,7 @@ class ScheduledMessageService(
         // 상태 업데이트 및 저장
         val updatedMessage = scheduledMessage.copy(status = ScheduledMessageStatus.CANCELED)
         val saveScheduledMessage = scheduledMessagePort.saveScheduledMessage(updatedMessage)
-        return scheduledMessageMapper.toScheduledMessageResponseDto(saveScheduledMessage)
+        return scheduledMessageDtoMapper.toDto(saveScheduledMessage)
     }
 
     override fun updateScheduledMessage(command: UpdateScheduledMessageCommand): ScheduledMessageResponseDto {
@@ -137,7 +137,7 @@ class ScheduledMessageService(
 
         // 업데이트된 메시지 저장 후 반환
         val saveScheduledMessage = scheduledMessagePort.saveScheduledMessage(updatedMessage)
-        return scheduledMessageMapper.toScheduledMessageResponseDto(saveScheduledMessage)
+        return scheduledMessageDtoMapper.toDto(saveScheduledMessage)
     }
 
     override fun getScheduledMessagesByUser(command: GetScheduledMessagesCommand): List<ScheduledMessageResponseDto> {
@@ -148,7 +148,7 @@ class ScheduledMessageService(
             .filter { it.status == ScheduledMessageStatus.PENDING }
 
         // 예약 메시지 목록 반환
-        return scheduledMessageList.map { scheduledMessageMapper.toScheduledMessageResponseDto(it) }
+        return scheduledMessageDtoMapper.toDtoList(scheduledMessageList)
     }
 
     override fun sendScheduledMessageNow(command: SendScheduledMessageNowCommand): ScheduledMessageResponseDto {
@@ -182,7 +182,7 @@ class ScheduledMessageService(
             // 상태 업데이트 및 저장
             val updatedMessage = scheduledMessage.copy(status = ScheduledMessageStatus.SENT)
             val saveScheduledMessage = scheduledMessagePort.saveScheduledMessage(updatedMessage)
-            return scheduledMessageMapper.toScheduledMessageResponseDto(saveScheduledMessage)
+            return scheduledMessageDtoMapper.toDto(saveScheduledMessage)
         } catch (e: Exception) {
             logger.error(e) { "예약 메시지 즉시 전송 실패: $scheduledMessageId" }
             throw e

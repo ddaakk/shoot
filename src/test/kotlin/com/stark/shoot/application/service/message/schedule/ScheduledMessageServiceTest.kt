@@ -2,12 +2,10 @@ package com.stark.shoot.application.service.message.schedule
 
 import com.stark.shoot.domain.chat.constants.MessageConstants
 
-import com.stark.shoot.adapter.`in`.rest.dto.ApiException
-import com.stark.shoot.adapter.`in`.rest.dto.ErrorCode
-import com.stark.shoot.adapter.`in`.rest.dto.message.MessageContentResponseDto
-import com.stark.shoot.adapter.`in`.rest.dto.message.MessageMetadataResponseDto
-import com.stark.shoot.adapter.`in`.rest.dto.message.schedule.ScheduledMessageResponseDto
-import com.stark.shoot.adapter.out.persistence.mongodb.mapper.ScheduledMessageMapper
+import com.stark.shoot.infrastructure.exception.web.ResourceNotFoundException
+import com.stark.shoot.application.dto.message.schedule.ScheduledMessageContentDto
+import com.stark.shoot.application.dto.message.schedule.ScheduledMessageResponseDto
+import com.stark.shoot.application.mapper.message.schedule.ScheduledMessageDtoMapper
 import com.stark.shoot.application.port.`in`.message.schedule.command.*
 import com.stark.shoot.application.port.out.chatroom.ChatRoomQueryPort
 import com.stark.shoot.application.port.out.message.MessagePublisherPort
@@ -36,13 +34,13 @@ class ScheduledMessageServiceTest {
 
     private val scheduledMessagePort = mock(ScheduledMessagePort::class.java)
     private val chatRoomQueryPort = mock(ChatRoomQueryPort::class.java)
-    private val scheduledMessageMapper = mock(ScheduledMessageMapper::class.java)
+    private val scheduledMessageDtoMapper = mock(ScheduledMessageDtoMapper::class.java)
     private val messagePublisherPort = mock(MessagePublisherPort::class.java)
 
     private val sut = ScheduledMessageService(
         scheduledMessagePort,
         chatRoomQueryPort,
-        scheduledMessageMapper,
+        scheduledMessageDtoMapper,
         messagePublisherPort
     )
 
@@ -60,14 +58,14 @@ class ScheduledMessageServiceTest {
         doReturn(null).`when`(chatRoomQueryPort).findById(roomId)
 
         // when & then
-        val exception = assertThrows<ApiException> {
+        val exception = assertThrows<ResourceNotFoundException> {
             sut.scheduleMessage(ScheduleMessageCommand(roomId, senderId, content, scheduledAt))
         }
 
-        assertThat(exception.errorCode).isEqualTo(ErrorCode.ROOM_NOT_FOUND)
+        assertThat(exception.message).contains("채팅방을 찾을 수 없습니다")
         verify(chatRoomQueryPort).findById(roomId)
         verifyNoInteractions(scheduledMessagePort)
-        verifyNoInteractions(scheduledMessageMapper)
+        verifyNoInteractions(scheduledMessageDtoMapper)
     }
 
     @Test
@@ -91,14 +89,14 @@ class ScheduledMessageServiceTest {
         doReturn(chatRoom).`when`(chatRoomQueryPort).findById(roomId)
 
         // when & then
-        val exception = assertThrows<ApiException> {
+        val exception = assertThrows<com.stark.shoot.infrastructure.exception.web.UnauthorizedException> {
             sut.scheduleMessage(ScheduleMessageCommand(roomId, senderId, content, scheduledAt))
         }
 
-        assertThat(exception.errorCode).isEqualTo(ErrorCode.USER_NOT_IN_ROOM)
+        assertThat(exception.message).contains("채팅방에 속해있지 않습니다")
         verify(chatRoomQueryPort).findById(roomId)
         verifyNoInteractions(scheduledMessagePort)
-        verifyNoInteractions(scheduledMessageMapper)
+        verifyNoInteractions(scheduledMessageDtoMapper)
     }
 
     @Test
@@ -122,14 +120,14 @@ class ScheduledMessageServiceTest {
         doReturn(chatRoom).`when`(chatRoomQueryPort).findById(roomId)
 
         // when & then
-        val exception = assertThrows<ApiException> {
+        val exception = assertThrows<com.stark.shoot.infrastructure.exception.web.InvalidInputException> {
             sut.scheduleMessage(ScheduleMessageCommand(roomId, senderId, content, scheduledAt))
         }
 
-        assertThat(exception.errorCode).isEqualTo(ErrorCode.INVALID_SCHEDULED_TIME)
+        assertThat(exception.message).contains("예약 시간은 현재 시간 이후여야 합니다")
         verify(chatRoomQueryPort).findById(roomId)
         verifyNoInteractions(scheduledMessagePort)
-        verifyNoInteractions(scheduledMessageMapper)
+        verifyNoInteractions(scheduledMessageDtoMapper)
     }
 
     @Test
@@ -149,14 +147,14 @@ class ScheduledMessageServiceTest {
             override fun findPendingMessagesBeforeTime(time: Instant): List<ScheduledMessage> = emptyList()
         }
 
-        // Create a subclass of ScheduledMessageMapper for testing
-        class TestScheduledMessageMapper : ScheduledMessageMapper() {
-            override fun toScheduledMessageResponseDto(domain: ScheduledMessage): ScheduledMessageResponseDto {
+        // Create a test implementation of ScheduledMessageDtoMapper
+        class TestScheduledMessageDtoMapper : ScheduledMessageDtoMapper() {
+            override fun toDto(domain: ScheduledMessage): ScheduledMessageResponseDto {
                 return ScheduledMessageResponseDto(
                     id = "test-id",
                     roomId = domain.roomId,
                     senderId = domain.senderId,
-                    content = MessageContentResponseDto(
+                    content = ScheduledMessageContentDto(
                         text = domain.content.text,
                         type = domain.content.type,
                         isEdited = false,
@@ -164,8 +162,7 @@ class ScheduledMessageServiceTest {
                     ),
                     scheduledAt = domain.scheduledAt,
                     createdAt = Instant.now(),
-                    status = ScheduledMessageStatus.PENDING,
-                    metadata = MessageMetadataResponseDto()
+                    status = ScheduledMessageStatus.PENDING
                 )
             }
         }
@@ -186,7 +183,7 @@ class ScheduledMessageServiceTest {
         )
 
         val testScheduledMessagePort = TestScheduledMessagePort()
-        val testScheduledMessageMapper = TestScheduledMessageMapper()
+        val testScheduledMessageDtoMapper = TestScheduledMessageDtoMapper()
 
         // Create a mock for ChatRoomQueryPort
         val testChatRoomQueryPort = mock(ChatRoomQueryPort::class.java)
@@ -196,7 +193,7 @@ class ScheduledMessageServiceTest {
         val testService = ScheduledMessageService(
             testScheduledMessagePort,
             testChatRoomQueryPort,
-            testScheduledMessageMapper,
+            testScheduledMessageDtoMapper,
             messagePublisherPort
         )
 
@@ -257,14 +254,14 @@ class ScheduledMessageServiceTest {
             override fun findPendingMessagesBeforeTime(time: Instant): List<ScheduledMessage> = emptyList()
         }
 
-        // Create a subclass of ScheduledMessageMapper for testing
-        class TestScheduledMessageMapper : ScheduledMessageMapper() {
-            override fun toScheduledMessageResponseDto(domain: ScheduledMessage): ScheduledMessageResponseDto {
+        // Create a test implementation of ScheduledMessageDtoMapper
+        class TestScheduledMessageDtoMapper : ScheduledMessageDtoMapper() {
+            override fun toDto(domain: ScheduledMessage): ScheduledMessageResponseDto {
                 return ScheduledMessageResponseDto(
                     id = domain.id!!.value,
                     roomId = domain.roomId,
                     senderId = domain.senderId,
-                    content = MessageContentResponseDto(
+                    content = ScheduledMessageContentDto(
                         text = domain.content.text,
                         type = domain.content.type,
                         isEdited = false,
@@ -272,8 +269,7 @@ class ScheduledMessageServiceTest {
                     ),
                     scheduledAt = domain.scheduledAt,
                     createdAt = Instant.now(),
-                    status = domain.status,
-                    metadata = MessageMetadataResponseDto()
+                    status = domain.status
                 )
             }
         }
@@ -284,14 +280,14 @@ class ScheduledMessageServiceTest {
         val userId = UserId.from(userIdLong)
 
         val testScheduledMessagePort = TestScheduledMessagePort()
-        val testScheduledMessageMapper = TestScheduledMessageMapper()
+        val testScheduledMessageDtoMapper = TestScheduledMessageDtoMapper()
         val testChatRoomQueryPort = mock(ChatRoomQueryPort::class.java)
 
         // Create a new service instance with our test implementations
         val testService = ScheduledMessageService(
             testScheduledMessagePort,
             testChatRoomQueryPort,
-            testScheduledMessageMapper,
+            testScheduledMessageDtoMapper,
             messagePublisherPort
         )
 
@@ -350,14 +346,14 @@ class ScheduledMessageServiceTest {
             override fun findPendingMessagesBeforeTime(time: Instant): List<ScheduledMessage> = emptyList()
         }
 
-        // Create a subclass of ScheduledMessageMapper for testing
-        class TestScheduledMessageMapper : ScheduledMessageMapper() {
-            override fun toScheduledMessageResponseDto(domain: ScheduledMessage): ScheduledMessageResponseDto {
+        // Create a test implementation of ScheduledMessageDtoMapper
+        class TestScheduledMessageDtoMapper : ScheduledMessageDtoMapper() {
+            override fun toDto(domain: ScheduledMessage): ScheduledMessageResponseDto {
                 return ScheduledMessageResponseDto(
                     id = domain.id!!.value,
                     roomId = domain.roomId,
                     senderId = domain.senderId,
-                    content = MessageContentResponseDto(
+                    content = ScheduledMessageContentDto(
                         text = domain.content.text,
                         type = domain.content.type,
                         isEdited = false,
@@ -365,8 +361,7 @@ class ScheduledMessageServiceTest {
                     ),
                     scheduledAt = domain.scheduledAt,
                     createdAt = Instant.now(),
-                    status = domain.status,
-                    metadata = MessageMetadataResponseDto()
+                    status = domain.status
                 )
             }
         }
@@ -379,14 +374,14 @@ class ScheduledMessageServiceTest {
         val newScheduledAt = Instant.now().plus(2, ChronoUnit.HOURS)
 
         val testScheduledMessagePort = TestScheduledMessagePort()
-        val testScheduledMessageMapper = TestScheduledMessageMapper()
+        val testScheduledMessageDtoMapper = TestScheduledMessageDtoMapper()
         val testChatRoomQueryPort = mock(ChatRoomQueryPort::class.java)
 
         // Create a new service instance with our test implementations
         val testService = ScheduledMessageService(
             testScheduledMessagePort,
             testChatRoomQueryPort,
-            testScheduledMessageMapper,
+            testScheduledMessageDtoMapper,
             messagePublisherPort
         )
 
@@ -473,14 +468,14 @@ class ScheduledMessageServiceTest {
             override fun findPendingMessagesBeforeTime(time: Instant): List<ScheduledMessage> = emptyList()
         }
 
-        // Create a subclass of ScheduledMessageMapper for testing
-        class TestScheduledMessageMapper : ScheduledMessageMapper() {
-            override fun toScheduledMessageResponseDto(domain: ScheduledMessage): ScheduledMessageResponseDto {
+        // Create a test implementation of ScheduledMessageDtoMapper
+        class TestScheduledMessageDtoMapper : ScheduledMessageDtoMapper() {
+            override fun toDto(domain: ScheduledMessage): ScheduledMessageResponseDto {
                 return ScheduledMessageResponseDto(
                     id = domain.id!!.value,
                     roomId = domain.roomId,
                     senderId = domain.senderId,
-                    content = MessageContentResponseDto(
+                    content = ScheduledMessageContentDto(
                         text = domain.content.text,
                         type = domain.content.type,
                         isEdited = false,
@@ -488,8 +483,7 @@ class ScheduledMessageServiceTest {
                     ),
                     scheduledAt = domain.scheduledAt,
                     createdAt = Instant.now(),
-                    status = domain.status,
-                    metadata = MessageMetadataResponseDto()
+                    status = domain.status
                 )
             }
         }
@@ -499,14 +493,14 @@ class ScheduledMessageServiceTest {
         val userId = UserId.from(userIdLong)
 
         val testScheduledMessagePort = TestScheduledMessagePort()
-        val testScheduledMessageMapper = TestScheduledMessageMapper()
+        val testScheduledMessageDtoMapper = TestScheduledMessageDtoMapper()
         val testChatRoomQueryPort = mock(ChatRoomQueryPort::class.java)
 
         // Create a new service instance with our test implementations
         val testService = ScheduledMessageService(
             testScheduledMessagePort,
             testChatRoomQueryPort,
-            testScheduledMessageMapper,
+            testScheduledMessageDtoMapper,
             messagePublisherPort
         )
 
@@ -564,14 +558,14 @@ class ScheduledMessageServiceTest {
             override fun findPendingMessagesBeforeTime(time: Instant): List<ScheduledMessage> = emptyList()
         }
 
-        // Create a subclass of ScheduledMessageMapper for testing
-        class TestScheduledMessageMapper : ScheduledMessageMapper() {
-            override fun toScheduledMessageResponseDto(domain: ScheduledMessage): ScheduledMessageResponseDto {
+        // Create a test implementation of ScheduledMessageDtoMapper
+        class TestScheduledMessageDtoMapper : ScheduledMessageDtoMapper() {
+            override fun toDto(domain: ScheduledMessage): ScheduledMessageResponseDto {
                 return ScheduledMessageResponseDto(
                     id = domain.id!!.value,
                     roomId = domain.roomId,
                     senderId = domain.senderId,
-                    content = MessageContentResponseDto(
+                    content = ScheduledMessageContentDto(
                         text = domain.content.text,
                         type = domain.content.type,
                         isEdited = false,
@@ -579,8 +573,7 @@ class ScheduledMessageServiceTest {
                     ),
                     scheduledAt = domain.scheduledAt,
                     createdAt = Instant.now(),
-                    status = domain.status,
-                    metadata = MessageMetadataResponseDto()
+                    status = domain.status
                 )
             }
         }
@@ -591,14 +584,14 @@ class ScheduledMessageServiceTest {
         val userId = UserId.from(userIdLong)
 
         val testScheduledMessagePort = TestScheduledMessagePort()
-        val testScheduledMessageMapper = TestScheduledMessageMapper()
+        val testScheduledMessageDtoMapper = TestScheduledMessageDtoMapper()
         val testChatRoomQueryPort = mock(ChatRoomQueryPort::class.java)
 
         // Create a new service instance with our test implementations
         val testService = ScheduledMessageService(
             testScheduledMessagePort,
             testChatRoomQueryPort,
-            testScheduledMessageMapper,
+            testScheduledMessageDtoMapper,
             messagePublisherPort
         )
 
