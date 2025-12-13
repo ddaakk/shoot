@@ -1,7 +1,7 @@
 package com.stark.shoot.application.service.message
 
-import com.stark.shoot.adapter.`in`.rest.dto.message.MessageResponseDto
-import com.stark.shoot.adapter.out.persistence.mongodb.mapper.ChatMessageMapper
+import com.stark.shoot.application.dto.message.response.MessageResponseDto
+import com.stark.shoot.application.mapper.message.MessageDtoMapper
 import com.stark.shoot.application.port.`in`.message.GetMessagesUseCase
 import com.stark.shoot.application.port.`in`.message.command.GetMessagesCommand
 import com.stark.shoot.application.port.out.message.MessageQueryPort
@@ -10,7 +10,7 @@ import com.stark.shoot.infrastructure.annotation.UseCase
 @UseCase
 class GetMessagesService(
     private val messageQueryPort: MessageQueryPort,
-    private val chatMessageMapper: ChatMessageMapper
+    private val messageDtoMapper: MessageDtoMapper
 ) : GetMessagesUseCase {
 
     /**
@@ -27,8 +27,8 @@ class GetMessagesService(
             messageQueryPort.findByRoomId(command.roomId, command.limit)
         }
 
-        // DTO로 변환하여 반환
-        return chatMessageMapper.toDtoList(domainMessages)
+        // Application DTO로 변환하여 반환
+        return messageDtoMapper.toDtoList(domainMessages)
     }
 
 }

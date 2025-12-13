@@ -1,7 +1,7 @@
 package com.stark.shoot.adapter.`in`.rest.message
 
 import com.stark.shoot.adapter.`in`.rest.dto.ResponseDto
-import com.stark.shoot.adapter.`in`.rest.dto.message.MessageResponseDto
+import com.stark.shoot.application.dto.message.response.MessageResponseDto
 import com.stark.shoot.application.port.`in`.message.GetMessagesUseCase
 import com.stark.shoot.application.port.`in`.message.command.GetMessagesCommand
 import io.swagger.v3.oas.annotations.Operation
@@ -32,6 +32,7 @@ class MessageReadController(
         val command = GetMessagesCommand.of(roomId, lastMessageId, limit)
         val messageDtos = getMessagesUseCase.getMessages(command)
 
+        // Application DTO를 그대로 API 응답으로 사용
         return ResponseDto.success(messageDtos)
     }
 

@@ -1,7 +1,7 @@
 package com.stark.shoot.application.service.message.thread
 
-import com.stark.shoot.adapter.`in`.rest.dto.message.thread.ThreadSummaryDto
-import com.stark.shoot.adapter.out.persistence.mongodb.mapper.ChatMessageMapper
+import com.stark.shoot.application.dto.message.response.ThreadSummaryDto
+import com.stark.shoot.application.mapper.message.MessageDtoMapper
 import com.stark.shoot.application.port.`in`.message.thread.GetThreadsUseCase
 import com.stark.shoot.application.port.`in`.message.thread.command.GetThreadsCommand
 import com.stark.shoot.application.port.out.message.thread.ThreadQueryPort
@@ -10,7 +10,7 @@ import com.stark.shoot.infrastructure.annotation.UseCase
 @UseCase
 class GetThreadsService(
     private val threadQueryPort: ThreadQueryPort,
-    private val chatMessageMapper: ChatMessageMapper,
+    private val messageDtoMapper: MessageDtoMapper,
 ) : GetThreadsUseCase {
 
     override fun getThreads(
@@ -36,10 +36,7 @@ class GetThreadsService(
 
         return rootMessages.map { message ->
             val count = message.id?.let { replyCounts[it] } ?: 0L
-            ThreadSummaryDto(
-                rootMessage = chatMessageMapper.toDto(message),
-                replyCount = count
-            )
+            messageDtoMapper.toThreadSummaryDto(message, count)
         }
     }
 
