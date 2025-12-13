@@ -1,7 +1,7 @@
 package com.stark.shoot.adapter.`in`.rest.user
 
 import com.stark.shoot.adapter.`in`.rest.dto.ResponseDto
-import com.stark.shoot.adapter.`in`.rest.dto.user.login.LoginResponse
+import com.stark.shoot.application.dto.user.LoginResponseDto
 import com.stark.shoot.application.port.`in`.user.token.RefreshTokenUseCase
 import com.stark.shoot.application.port.`in`.user.token.command.RefreshTokenCommand
 import io.swagger.v3.oas.annotations.Operation
@@ -25,7 +25,7 @@ class TokenController(
     @PostMapping("/refresh-token")
     fun refreshToken(
         @RequestHeader("Authorization") refreshTokenHeader: String
-    ): ResponseDto<LoginResponse> {
+    ): ResponseDto<LoginResponseDto> {
         val command = RefreshTokenCommand.of(refreshTokenHeader)
         val loginResponse = refreshTokenUseCase.generateNewAccessToken(command)
         return ResponseDto.success(loginResponse, "새 액세스 토큰이 발급되었습니다.")

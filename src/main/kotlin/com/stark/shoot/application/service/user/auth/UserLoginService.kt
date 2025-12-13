@@ -1,6 +1,6 @@
 package com.stark.shoot.application.service.user.auth
 
-import com.stark.shoot.adapter.`in`.rest.dto.user.login.LoginResponse
+import com.stark.shoot.application.dto.user.LoginResponseDto
 import com.stark.shoot.application.port.`in`.user.auth.UserLoginUseCase
 import com.stark.shoot.application.port.`in`.user.auth.command.LoginCommand
 import com.stark.shoot.application.port.out.user.UserQueryPort
@@ -26,7 +26,7 @@ class UserLoginService(
      * @param command 로그인 커맨드 (사용자명, 비밀번호)
      * @return 로그인 응답 (사용자 ID, 액세스 토큰, 리프레시 토큰)
      */
-    override fun login(command: LoginCommand): LoginResponse {
+    override fun login(command: LoginCommand): LoginResponseDto {
         // 사용자 조회
         val user = userQueryPort.findByUsername(command.username)
             ?: throw UserException.InvalidCredentials("해당 username의 사용자를 찾을 수 없습니다.")
@@ -48,7 +48,7 @@ class UserLoginService(
             token = refreshToken
         )
 
-        return LoginResponse(userId.toString(), accessToken, refreshToken.value)
+        return LoginResponseDto(userId.toString(), accessToken, refreshToken.value)
     }
 
 }

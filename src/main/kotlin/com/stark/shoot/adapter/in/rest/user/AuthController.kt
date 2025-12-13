@@ -1,9 +1,9 @@
 package com.stark.shoot.adapter.`in`.rest.user
 
 import com.stark.shoot.adapter.`in`.rest.dto.ResponseDto
-import com.stark.shoot.adapter.`in`.rest.dto.user.UserResponse
 import com.stark.shoot.adapter.`in`.rest.dto.user.login.LoginRequest
-import com.stark.shoot.adapter.`in`.rest.dto.user.login.LoginResponse
+import com.stark.shoot.application.dto.user.LoginResponseDto
+import com.stark.shoot.application.dto.user.UserResponseDto
 import com.stark.shoot.application.port.`in`.user.auth.UserAuthUseCase
 import com.stark.shoot.application.port.`in`.user.auth.UserLoginUseCase
 import com.stark.shoot.application.port.`in`.user.auth.command.LoginCommand
@@ -29,7 +29,7 @@ class AuthController(
     @PostMapping("/login")
     fun login(
         @Valid @RequestBody request: LoginRequest
-    ): ResponseDto<LoginResponse> {
+    ): ResponseDto<LoginResponseDto> {
         val command = LoginCommand.of(request.username, request.password)
         val response = userLoginUseCase.login(command)
         return ResponseDto.success(response, "로그인에 성공했습니다.")
@@ -42,7 +42,7 @@ class AuthController(
     @GetMapping("/me")
     fun getCurrentUser(
         authentication: Authentication
-    ): ResponseDto<UserResponse> {
+    ): ResponseDto<UserResponseDto> {
         val command = RetrieveUserDetailsCommand.of(authentication)
         val user = userAuthUseCase.retrieveUserDetails(command)
         return ResponseDto.success(user)

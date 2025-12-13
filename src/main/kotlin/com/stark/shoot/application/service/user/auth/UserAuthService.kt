@@ -1,7 +1,7 @@
 package com.stark.shoot.application.service.user.auth
 
-import com.stark.shoot.adapter.`in`.rest.dto.user.UserResponse
-import com.stark.shoot.adapter.`in`.rest.dto.user.toResponse
+import com.stark.shoot.application.dto.user.UserResponseDto
+import com.stark.shoot.application.mapper.user.UserDtoMapper
 import com.stark.shoot.application.port.`in`.user.auth.UserAuthUseCase
 import com.stark.shoot.application.port.`in`.user.auth.command.RetrieveUserDetailsCommand
 import com.stark.shoot.application.port.out.user.UserQueryPort
@@ -13,7 +13,8 @@ import com.stark.shoot.infrastructure.util.extractUserIdAsLong
 
 @UseCase
 class UserAuthService(
-    private val userQueryPort: UserQueryPort
+    private val userQueryPort: UserQueryPort,
+    private val userDtoMapper: UserDtoMapper
 ) : UserAuthUseCase {
 
     /**
@@ -24,7 +25,7 @@ class UserAuthService(
      */
     override fun retrieveUserDetails(
         command: RetrieveUserDetailsCommand
-    ): UserResponse {
+    ): UserResponseDto {
         val authentication = command.authentication
 
         if (authentication == null || !authentication.isAuthenticated) {
@@ -36,7 +37,7 @@ class UserAuthService(
         val user = userQueryPort.findUserById(userId)
             ?: throw ResourceNotFoundException("해당 사용자를 찾을 수 없습니다: $userId")
 
-        return user.toResponse()
+        return userDtoMapper.toDto(user)
     }
 
 }

@@ -1,6 +1,6 @@
 package com.stark.shoot.application.service.user.token
 
-import com.stark.shoot.adapter.`in`.rest.dto.user.login.LoginResponse
+import com.stark.shoot.application.dto.user.LoginResponseDto
 import com.stark.shoot.application.port.`in`.user.token.RefreshTokenUseCase
 import com.stark.shoot.application.port.`in`.user.token.command.RefreshTokenCommand
 import com.stark.shoot.application.port.out.user.token.RefreshTokenCommandPort
@@ -26,7 +26,7 @@ class RefreshTokenService(
      */
     override fun generateNewAccessToken(
         command: RefreshTokenCommand
-    ): LoginResponse {
+    ): LoginResponseDto {
         // 헤더에서 리프레시 토큰 추출
         val refreshToken = extractTokenFromHeader(command.refreshTokenHeader)
 
@@ -46,7 +46,7 @@ class RefreshTokenService(
         val newAccessToken = jwtProvider.generateToken(userId, username)
 
         // 응답 생성 (리프레시 토큰은 재사용)
-        return LoginResponse(userId, newAccessToken, refreshToken)
+        return LoginResponseDto(userId, newAccessToken, refreshToken)
     }
 
     /**
