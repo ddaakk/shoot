@@ -12,6 +12,7 @@ import com.stark.shoot.domain.shared.event.MessageEvent
 import com.stark.shoot.domain.shared.event.type.EventType
 import com.stark.shoot.domain.saga.SagaState
 import com.stark.shoot.infrastructure.annotation.UseCase
+import com.stark.shoot.infrastructure.config.async.ApplicationCoroutineScope
 import io.github.oshai.kotlinlogging.KotlinLogging
 
 /**
@@ -34,7 +35,8 @@ class HandleMessageEventService(
     private val loadUrlContentPort: LoadUrlContentPort,
     private val cacheUrlPreviewPort: CacheUrlPreviewPort,
     private val messageStatusNotificationPort: MessageStatusNotificationPort,
-    private val outboxEventRepository: OutboxEventRepository
+    private val outboxEventRepository: OutboxEventRepository,
+    private val applicationCoroutineScope: ApplicationCoroutineScope
 ) : HandleMessageEventUseCase {
 
     private val logger = KotlinLogging.logger {}
@@ -162,19 +164,26 @@ class HandleMessageEventService(
 
     /**
      * URL 미리보기 처리 (필요시)
+     *
+     * 비동기로 처리하여 메시지 저장 로직을 블로킹하지 않습니다.
+     * URL fetching은 I/O 바운드 작업이므로 별도 코루틴에서 실행됩니다.
      */
     private fun processUrlPreviewIfNeeded(message: ChatMessage) {
         val previewUrl = message.metadata.previewUrl
         if (message.metadata.needsUrlPreview && previewUrl != null) {
-            try {
-                val preview = loadUrlContentPort.fetchUrlContent(previewUrl)
+            // 백그라운드 코루틴에서 비동기로 실행 (메인 로직 블로킹 방지)
+            applicationCoroutineScope.launch {
+                try {
+                    val preview = loadUrlContentPort.fetchUrlContent(previewUrl)
 
-                if (preview != null) {
-                    cacheUrlPreviewPort.cacheUrlPreview(previewUrl, preview)
-                    // URL 미리보기 업데이트는 별도 이벤트로 처리
+                    if (preview != null) {
+                        cacheUrlPreviewPort.cacheUrlPreview(previewUrl, preview)
+                        // URL 미리보기 업데이트는 별도 이벤트로 처리
+                        logger.debug { "URL 미리보기 캐싱 완료: $previewUrl" }
+                    }
+                } catch (e: Exception) {
+                    logger.error(e) { "URL 미리보기 처리 실패: $previewUrl" }
                 }
-            } catch (e: Exception) {
-                logger.error(e) { "URL 미리보기 처리 실패: $previewUrl" }
             }
         }
     }

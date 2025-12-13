@@ -4,6 +4,8 @@ import com.stark.shoot.application.port.out.message.preview.LoadUrlContentPort
 import com.stark.shoot.domain.chat.message.vo.ChatMessageMetadata
 import com.stark.shoot.infrastructure.annotation.Adapter
 import io.github.oshai.kotlinlogging.KotlinLogging
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.jsoup.Connection
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
@@ -35,7 +37,7 @@ class JsoupUrlContentAdapter : LoadUrlContentPort {
         private const val OG_SITE_NAME_SELECTOR = "meta[property=og:site_name]"
     }
 
-    override fun fetchUrlContent(url: String): ChatMessageMetadata.UrlPreview? {
+    override suspend fun fetchUrlContent(url: String): ChatMessageMetadata.UrlPreview? {
         if (url.isBlank()) {
             logger.warn { "빈 URL이 제공되었습니다" }
             return null
@@ -48,30 +50,33 @@ class JsoupUrlContentAdapter : LoadUrlContentPort {
             return null
         }
 
-        try {
-            // Jsoup 연결 설정 최적화
-            val connection = createOptimizedConnection(url)
-            val document = executeWithTimeout(connection)
+        return try {
+            // I/O 스레드에서 비동기로 실행 (메인 스레드 블로킹 방지)
+            withContext(Dispatchers.IO) {
+                // Jsoup 연결 설정 최적화
+                val connection = createOptimizedConnection(url)
+                val document = executeWithTimeout(connection)
 
-            // 문서가 null이면 처리 중단
-            if (document == null) {
-                cacheFailedUrl(url)
-                return null
+                // 문서가 null이면 처리 중단
+                if (document == null) {
+                    cacheFailedUrl(url)
+                    return@withContext null
+                }
+
+                // 메타데이터 추출 및 정규화
+                val preview = extractAndNormalizeMetadata(document, url)
+
+                // 유효한 미리보기 데이터가 있는지 확인
+                if (preview == null) {
+                    cacheFailedUrl(url)
+                }
+
+                preview
             }
-
-            // 메타데이터 추출 및 정규화
-            val preview = extractAndNormalizeMetadata(document, url)
-
-            // 유효한 미리보기 데이터가 있는지 확인
-            if (preview == null) {
-                cacheFailedUrl(url)
-            }
-
-            return preview
         } catch (e: Exception) {
             logger.error(e) { "URL 내용 불러오기 실패: $url - ${e.message}" }
             cacheFailedUrl(url)
-            return null
+            null
         }
     }
 

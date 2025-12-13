@@ -22,22 +22,30 @@ import org.springframework.scheduling.annotation.Async
  * - UserDeletedEvent 수신 시 MongoDB 메시지 클린업
  * - 비동기 처리로 User 삭제 성능에 영향 없음
  * - 실패해도 로그만 남기고 User 삭제는 성공 (보상 가능)
+ *
+ * 성능 최적화:
+ * - MongoDB updateMany를 사용한 배치 업데이트
+ * - 기존 O(n) forEach 방식 대신 O(1) 단일 쿼리로 개선
  */
 @ApplicationEventListener
 class UserDeletedMongoCleanupListener(
-    private val messageQueryPort: MessageQueryPort,
     private val messageCommandPort: MessageCommandPort
 ) {
 
     private val logger = KotlinLogging.logger {}
 
     /**
-     * 사용자 삭제 시 MongoDB 메시지 클린업
+     * 사용자 삭제 시 MongoDB 메시지 클린업 (배치 작업)
      *
      * 처리 내용:
-     * 1. 해당 사용자가 보낸 모든 메시지 조회
+     * 1. MongoDB updateMany를 사용하여 모든 메시지를 한 번에 업데이트
      * 2. 메시지 소프트 삭제 (isDeleted = true)
      * 3. 실패 시 로그만 남김 (User 삭제는 이미 완료됨)
+     *
+     * 성능 개선:
+     * - 기존: forEach + N번의 save() → O(n) 쿼리
+     * - 개선: MongoDB updateMany → O(1) 단일 쿼리
+     * - 1000개 메시지: 1000번 쿼리 → 1번 쿼리
      *
      * @Async: 비동기 처리로 User 삭제 성능에 영향 없음
      */
@@ -50,51 +58,19 @@ class UserDeletedMongoCleanupListener(
         }
 
         try {
-            // 1. 해당 사용자가 보낸 모든 메시지 조회
-            val userMessages = messageQueryPort.findBySenderId(event.userId)
+            // MongoDB updateMany를 사용한 배치 업데이트 (O(1) 성능 개선)
+            // 기존: forEach로 메시지 개별 업데이트 (O(n) 쿼리)
+            // 개선: 단일 쿼리로 모든 메시지 업데이트 (O(1) 쿼리)
+            val updatedCount = messageCommandPort.markAllAsDeletedBySenderId(event.userId)
 
-            if (userMessages.isEmpty()) {
+            if (updatedCount == 0L) {
                 logger.info { "클린업할 메시지 없음: userId=${event.userId.value}" }
                 return
             }
 
             logger.info {
-                "총 ${userMessages.size}개의 메시지를 클린업합니다: userId=${event.userId.value}"
-            }
-
-            // 2. 모든 메시지 소프트 삭제
-            var successCount = 0
-            var failCount = 0
-
-            userMessages.forEach { message ->
-                try {
-                    message.markAsDeleted()
-                    messageCommandPort.save(message)
-                    successCount++
-
-                    if (successCount % 100 == 0) {
-                        logger.debug { "진행 상황: $successCount/${userMessages.size} 메시지 삭제됨" }
-                    }
-                } catch (e: Exception) {
-                    failCount++
-                    logger.error(e) {
-                        "메시지 삭제 실패: messageId=${message.id?.value}, userId=${event.userId.value}"
-                    }
-                }
-            }
-
-            logger.info {
                 "MongoDB 메시지 클린업 완료: userId=${event.userId.value}, " +
-                "성공=$successCount, 실패=$failCount, 총=${userMessages.size}"
-            }
-
-            // 3. 실패가 많으면 알림 (전체의 10% 이상 실패 시)
-            if (failCount > userMessages.size * 0.1) {
-                logger.warn {
-                    "⚠️ MongoDB 클린업 실패율 높음: userId=${event.userId.value}, " +
-                    "실패율=${failCount * 100 / userMessages.size}%"
-                }
-                // TODO: 관리자 알림 또는 재시도 큐에 추가
+                "업데이트된 메시지 수=$updatedCount (배치 작업으로 성능 최적화됨)"
             }
 
         } catch (e: Exception) {
