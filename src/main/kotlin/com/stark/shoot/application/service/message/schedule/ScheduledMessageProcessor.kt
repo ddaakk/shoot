@@ -1,8 +1,5 @@
 package com.stark.shoot.application.service.message.schedule
 
-import com.stark.shoot.adapter.`in`.rest.dto.message.ChatMessageRequest
-import com.stark.shoot.adapter.`in`.rest.dto.message.MessageContentRequest
-import com.stark.shoot.adapter.`in`.rest.dto.message.toRequestDto
 import com.stark.shoot.application.port.out.message.MessagePublisherPort
 import com.stark.shoot.application.port.out.message.ScheduledMessagePort
 import com.stark.shoot.application.acl.*
@@ -220,21 +217,6 @@ class ScheduledMessageProcessor(
         }
     }
 
-    /**
-     * ScheduledMessage에서 ChatMessageRequest 객체 생성
-     */
-    private fun createChatMessageRequest(scheduledMessage: ScheduledMessage): ChatMessageRequest {
-        return ChatMessageRequest(
-            roomId = scheduledMessage.roomId,
-            senderId = scheduledMessage.senderId,
-            content = MessageContentRequest(
-                text = scheduledMessage.content.text,
-                type = scheduledMessage.content.type
-            ),
-            tempId = UUID.randomUUID().toString(),
-            metadata = scheduledMessage.metadata.toRequestDto()
-        )
-    }
 
     /**
      * ScheduledMessage에서 ChatMessage 도메인 객체 생성
