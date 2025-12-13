@@ -1,10 +1,10 @@
 package com.stark.shoot.application.service.event.cdc
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import com.stark.shoot.adapter.out.persistence.postgres.repository.OutboxEventRepository
 import com.stark.shoot.application.port.`in`.event.cdc.ProcessCDCEventUseCase
 import com.stark.shoot.application.port.`in`.event.cdc.command.ProcessCDCEventCommand
 import com.stark.shoot.application.port.out.event.EventPublishPort
+import com.stark.shoot.application.port.out.saga.OutboxEventPort
 import com.stark.shoot.domain.shared.event.DomainEvent
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.stereotype.Service
@@ -18,7 +18,7 @@ import org.springframework.transaction.annotation.Transactional
 @Service
 class ProcessCDCEventService(
     private val eventPublisher: EventPublishPort,
-    private val outboxEventRepository: OutboxEventRepository,
+    private val outboxEventPort: OutboxEventPort,
     private val objectMapper: ObjectMapper
 ) : ProcessCDCEventUseCase {
 
@@ -102,13 +102,13 @@ class ProcessCDCEventService(
      */
     private fun markAsProcessedBySagaId(sagaId: String, eventType: String) {
         try {
-            val events = outboxEventRepository.findBySagaIdOrderByCreatedAtAsc(sagaId)
+            val events = outboxEventPort.findEventsBySagaId(sagaId)
 
             events
                 .filter { it.eventType == eventType && !it.processed }
                 .forEach { event ->
                     event.markAsProcessed()
-                    outboxEventRepository.save(event)
+                    outboxEventPort.saveEvent(event)
                     logger.debug {
                         "Outbox 이벤트 처리 완료 표시: id=${event.id}, sagaId=$sagaId"
                     }

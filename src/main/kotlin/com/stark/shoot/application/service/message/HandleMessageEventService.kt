@@ -1,10 +1,10 @@
 package com.stark.shoot.application.service.message
 
-import com.stark.shoot.adapter.out.persistence.postgres.repository.OutboxEventRepository
 import com.stark.shoot.application.port.`in`.message.HandleMessageEventUseCase
 import com.stark.shoot.application.port.out.message.MessageStatusNotificationPort
 import com.stark.shoot.application.port.out.message.preview.CacheUrlPreviewPort
 import com.stark.shoot.application.port.out.message.preview.LoadUrlContentPort
+import com.stark.shoot.application.port.out.saga.OutboxEventPort
 import com.stark.shoot.application.service.saga.message.MessageSagaOrchestrator
 import com.stark.shoot.domain.chat.message.ChatMessage
 import com.stark.shoot.domain.chat.message.type.MessageStatus
@@ -35,7 +35,7 @@ class HandleMessageEventService(
     private val loadUrlContentPort: LoadUrlContentPort,
     private val cacheUrlPreviewPort: CacheUrlPreviewPort,
     private val messageStatusNotificationPort: MessageStatusNotificationPort,
-    private val outboxEventRepository: OutboxEventRepository,
+    private val outboxEventPort: OutboxEventPort,
     private val applicationCoroutineScope: ApplicationCoroutineScope
 ) : HandleMessageEventUseCase {
 

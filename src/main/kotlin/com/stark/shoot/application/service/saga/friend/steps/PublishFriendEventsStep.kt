@@ -2,7 +2,7 @@ package com.stark.shoot.application.service.saga.friend.steps
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.stark.shoot.adapter.out.persistence.postgres.entity.OutboxEventEntity
-import com.stark.shoot.adapter.out.persistence.postgres.repository.OutboxEventRepository
+import com.stark.shoot.application.port.out.saga.OutboxEventPort
 import com.stark.shoot.application.service.saga.friend.FriendRequestSagaContext
 import com.stark.shoot.domain.saga.SagaStep
 import com.stark.shoot.domain.shared.event.FriendAddedEvent
@@ -21,7 +21,7 @@ import org.springframework.transaction.annotation.Transactional
  */
 @Component
 class PublishFriendEventsStep(
-    private val outboxEventRepository: OutboxEventRepository,
+    private val outboxEventPort: OutboxEventPort,
     private val objectMapper: ObjectMapper
 ) : SagaStep<FriendRequestSagaContext> {
 
@@ -60,8 +60,8 @@ class PublishFriendEventsStep(
     override fun compensate(context: FriendRequestSagaContext): Boolean {
         return try {
             // Outbox 이벤트 삭제 (Saga ID로 조회해서 삭제)
-            val events = outboxEventRepository.findBySagaIdOrderByCreatedAtAsc(context.sagaId)
-            outboxEventRepository.deleteAll(events)
+            val events = outboxEventPort.findEventsBySagaId(context.sagaId)
+            outboxEventPort.deleteEvents(events)
             logger.info { "Compensated: Deleted ${events.size} outbox events for saga: ${context.sagaId}" }
             true
         } catch (e: Exception) {
@@ -85,7 +85,7 @@ class PublishFriendEventsStep(
         val idempotencyKey = "$sagaId-$eventTypeName-$suffix"
 
         // Idempotency check: 이미 존재하는 이벤트는 저장하지 않음
-        if (outboxEventRepository.existsByIdempotencyKey(idempotencyKey)) {
+        if (outboxEventPort.existsByIdempotencyKey(idempotencyKey)) {
             logger.info { "Outbox event already exists (skipping duplicate): $idempotencyKey" }
             return
         }
@@ -98,7 +98,7 @@ class PublishFriendEventsStep(
                 eventType = event::class.java.name,
                 payload = payload
             )
-            outboxEventRepository.save(outboxEvent)
+            outboxEventPort.saveEvent(outboxEvent)
         } catch (e: org.springframework.dao.DataIntegrityViolationException) {
             // Race condition: check와 save 사이에 다른 스레드가 같은 이벤트 생성
             // DB 제약 조건이 중복을 방지했으므로 정상 처리

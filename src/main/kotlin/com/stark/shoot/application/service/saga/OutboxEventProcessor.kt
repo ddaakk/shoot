@@ -4,9 +4,9 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.stark.shoot.adapter.out.persistence.postgres.entity.OutboxDeadLetterEntity
 import com.stark.shoot.adapter.out.persistence.postgres.entity.OutboxEventEntity
 import com.stark.shoot.adapter.out.persistence.postgres.repository.OutboxDeadLetterRepository
-import com.stark.shoot.adapter.out.persistence.postgres.repository.OutboxEventRepository
 import com.stark.shoot.application.port.out.event.EventPublishPort
 import com.stark.shoot.application.port.out.notification.SlackNotificationPort
+import com.stark.shoot.application.port.out.saga.OutboxEventPort
 import com.stark.shoot.domain.saga.SagaState
 import com.stark.shoot.domain.shared.event.DomainEvent
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -45,7 +45,7 @@ import java.time.temporal.ChronoUnit
  */
 @Service
 class OutboxEventProcessor(
-    private val outboxEventRepository: OutboxEventRepository,
+    private val outboxEventPort: OutboxEventPort,
     private val deadLetterRepository: OutboxDeadLetterRepository,
     private val eventPublisher: EventPublishPort,
     private val slackNotificationPort: SlackNotificationPort,
@@ -72,7 +72,7 @@ class OutboxEventProcessor(
     @Transactional
     fun processOutboxEvents() {
         try {
-            val unprocessedEvents = outboxEventRepository.findByProcessedFalseOrderByCreatedAtAsc()
+            val unprocessedEvents = outboxEventPort.findUnprocessedEvents()
 
             if (unprocessedEvents.isEmpty()) {
                 logger.debug { "No outbox events to process" }
@@ -110,7 +110,7 @@ class OutboxEventProcessor(
 
             // 성공 처리
             outboxEvent.markAsProcessed()
-            outboxEventRepository.save(outboxEvent)
+            outboxEventPort.saveEvent(outboxEvent)
 
             logger.debug { "Outbox event processed: id=${outboxEvent.id}, type=${outboxEvent.eventType}" }
 
@@ -119,7 +119,7 @@ class OutboxEventProcessor(
 
             // 재시도 증가
             outboxEvent.incrementRetry(e.message ?: "Unknown error")
-            outboxEventRepository.save(outboxEvent)
+            outboxEventPort.saveEvent(outboxEvent)
         }
     }
 
@@ -150,7 +150,7 @@ class OutboxEventProcessor(
             // 원본 이벤트는 처리 완료로 표시 (더 이상 재시도 안 함)
             outboxEvent.markAsProcessed()
             outboxEvent.updateSagaState(SagaState.FAILED)
-            outboxEventRepository.save(outboxEvent)
+            outboxEventPort.saveEvent(outboxEvent)
 
             logger.error {
                 "이벤트를 DLQ로 이동: " +
@@ -193,10 +193,10 @@ class OutboxEventProcessor(
     fun cleanupOldEvents() {
         try {
             val threshold = Instant.now().minus(OUTBOX_RETENTION_DAYS, ChronoUnit.DAYS)
-            val oldEvents = outboxEventRepository.findOldProcessedEvents(threshold)
+            val oldEvents = outboxEventPort.findOldProcessedEvents(threshold)
 
             if (oldEvents.isNotEmpty()) {
-                outboxEventRepository.deleteAll(oldEvents)
+                outboxEventPort.deleteEvents(oldEvents)
                 logger.info { "Cleaned up ${oldEvents.size} old outbox events" }
             }
 
@@ -295,7 +295,7 @@ class OutboxEventProcessor(
     @Transactional(readOnly = true)
     fun monitorFailedEvents() {
         try {
-            val failedEvents = outboxEventRepository.findFailedEventsExceedingRetries(MAX_RETRY_COUNT)
+            val failedEvents = outboxEventPort.findFailedEventsExceedingRetries(MAX_RETRY_COUNT)
 
             if (failedEvents.isNotEmpty()) {
                 logger.error {
