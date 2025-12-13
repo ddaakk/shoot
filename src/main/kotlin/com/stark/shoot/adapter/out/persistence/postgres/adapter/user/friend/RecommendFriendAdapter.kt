@@ -253,11 +253,23 @@ class RecommendFriendAdapter(
         
         val results = entityManager.createQuery(query)
             .setParameter("userIds", userIds)
-            .resultList as List<Array<Any>>
-            
-        return results.groupBy(
-            keySelector = { it[0] as Long },
-            valueTransform = { it[1] as Long }
+            .resultList
+
+        // 타입 안전성을 보장하기 위해 각 결과를 검증하면서 변환
+        return results.mapNotNull { result ->
+            // Array<Any> 타입인지 확인
+            if (result is Array<*> && result.size >= 2) {
+                val userId = result[0] as? Long
+                val friendId = result[1] as? Long
+
+                // 둘 다 Long 타입인 경우에만 Pair 생성
+                if (userId != null && friendId != null) {
+                    Pair(userId, friendId)
+                } else null
+            } else null
+        }.groupBy(
+            keySelector = { it.first },
+            valueTransform = { it.second }
         )
     }
     
@@ -329,11 +341,21 @@ class RecommendFriendAdapter(
         val results = entityManager.createQuery(query)
             .setParameter("userId1Value", userId1Value)
             .setParameter("candidateUserIds", candidateUserIds)
-            .resultList as List<Array<Any>>
-            
-        return results.associate { 
-            (it[0] as Long) to (it[1] as Long).toInt()
-        }
+            .resultList
+
+        // 타입 안전성을 보장하기 위해 각 결과를 검증하면서 변환
+        return results.mapNotNull { result ->
+            // Array<Any> 타입인지 확인
+            if (result is Array<*> && result.size >= 2) {
+                val candidateId = result[0] as? Long
+                val count = result[1] as? Long
+
+                // 둘 다 올바른 타입인 경우에만 Pair 생성
+                if (candidateId != null && count != null) {
+                    Pair(candidateId, count.toInt())
+                } else null
+            } else null
+        }.toMap()
     }
 
     /**
