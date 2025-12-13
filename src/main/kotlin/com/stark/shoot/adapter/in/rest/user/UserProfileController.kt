@@ -9,6 +9,7 @@ import com.stark.shoot.application.port.`in`.user.profile.command.SetBackgroundI
 import com.stark.shoot.application.port.`in`.user.profile.command.SetProfileImageCommand
 import com.stark.shoot.application.port.`in`.user.profile.command.UpdateProfileCommand
 import com.stark.shoot.infrastructure.exception.web.ResourceNotFoundException
+import com.stark.shoot.infrastructure.util.extractUserIdAsLong
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.security.core.Authentication
@@ -31,7 +32,7 @@ class UserProfileController(
         authentication: Authentication,
         @RequestBody request: UpdateProfileRequest
     ): ResponseDto<UserResponse> {
-        val userId = authentication.name.toLong()
+        val userId = authentication.extractUserIdAsLong()
         val command = UpdateProfileCommand.of(
             userId = userId,
             nickname = request.nickname,
@@ -52,7 +53,7 @@ class UserProfileController(
         authentication: Authentication,
         @RequestBody request: SetProfileImageRequest
     ): ResponseDto<UserResponse> {
-        val userId = authentication.name.toLong()
+        val userId = authentication.extractUserIdAsLong()
         val command = SetProfileImageCommand.of(
             userId = userId,
             profileImageUrl = request.profileImageUrl
@@ -70,7 +71,7 @@ class UserProfileController(
         authentication: Authentication,
         @RequestBody request: SetBackgroundImageRequest
     ): ResponseDto<UserResponse> {
-        val userId = authentication.name.toLong()
+        val userId = authentication.extractUserIdAsLong()
         val command = SetBackgroundImageCommand.of(
             userId = userId,
             backgroundImageUrl = request.backgroundImageUrl

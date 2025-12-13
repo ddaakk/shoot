@@ -3,6 +3,7 @@ package com.stark.shoot.application.port.`in`.message.reaction.command
 import com.stark.shoot.domain.chat.message.vo.MessageId
 import com.stark.shoot.domain.shared.UserId
 import org.springframework.security.core.Authentication
+import com.stark.shoot.infrastructure.util.extractUserIdAsLong
 
 /**
  * Command for toggling a reaction on a message
@@ -31,7 +32,7 @@ data class ToggleMessageReactionCommand(
         }
 
         fun of(messageId: String, authentication: Authentication, reactionType: String): ToggleMessageReactionCommand {
-            val userId = authentication.name.toLong()
+            val userId = authentication.extractUserIdAsLong()
             return of(messageId, userId, reactionType)
         }
     }

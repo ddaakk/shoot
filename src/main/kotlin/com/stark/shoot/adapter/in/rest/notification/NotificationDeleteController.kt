@@ -6,6 +6,7 @@ import com.stark.shoot.application.port.`in`.notification.command.DeleteAllNotif
 import com.stark.shoot.application.port.`in`.notification.command.DeleteNotificationCommand
 import com.stark.shoot.domain.notification.vo.NotificationId
 import com.stark.shoot.domain.shared.UserId
+import com.stark.shoot.infrastructure.util.extractUserIdAsLong
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.security.core.Authentication
@@ -30,7 +31,7 @@ class NotificationDeleteController(
         authentication: Authentication,
         @PathVariable notificationId: String,
     ): ResponseDto<Boolean> {
-        val userId = authentication.name.toLong()
+        val userId = authentication.extractUserIdAsLong()
         val command = DeleteNotificationCommand(NotificationId.from(notificationId), UserId.from(userId))
         val deleted = notificationManagementUseCase.deleteNotification(command)
         return ResponseDto.success(deleted, "알림이 성공적으로 삭제되었습니다.")
@@ -48,7 +49,7 @@ class NotificationDeleteController(
     fun deleteAllNotifications(
         authentication: Authentication
     ): ResponseDto<Int> {
-        val userId = authentication.name.toLong()
+        val userId = authentication.extractUserIdAsLong()
         val command = DeleteAllNotificationsCommand(UserId.from(userId))
         val count = notificationManagementUseCase.deleteAllNotifications(command)
         return ResponseDto.success(count, "모든 알림이 성공적으로 삭제되었습니다.")

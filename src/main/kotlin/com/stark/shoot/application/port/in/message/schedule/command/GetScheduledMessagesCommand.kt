@@ -3,6 +3,7 @@ package com.stark.shoot.application.port.`in`.message.schedule.command
 import com.stark.shoot.domain.chatroom.vo.ChatRoomId
 import com.stark.shoot.domain.shared.UserId
 import org.springframework.security.core.Authentication
+import com.stark.shoot.infrastructure.util.extractUserIdAsLong
 
 /**
  * Command for getting scheduled messages
@@ -20,7 +21,7 @@ data class GetScheduledMessagesCommand(
         }
         
         fun of(authentication: Authentication, roomId: Long?): GetScheduledMessagesCommand {
-            val userId = authentication.name.toLong()
+            val userId = authentication.extractUserIdAsLong()
             return of(userId, roomId)
         }
     }

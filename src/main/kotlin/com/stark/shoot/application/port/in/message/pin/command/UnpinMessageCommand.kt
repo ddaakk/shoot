@@ -3,6 +3,7 @@ package com.stark.shoot.application.port.`in`.message.pin.command
 import com.stark.shoot.domain.chat.message.vo.MessageId
 import com.stark.shoot.domain.shared.UserId
 import org.springframework.security.core.Authentication
+import com.stark.shoot.infrastructure.util.extractUserIdAsLong
 
 /**
  * Command for unpinning a message
@@ -20,7 +21,7 @@ data class UnpinMessageCommand(
         }
         
         fun of(messageId: String, authentication: Authentication): UnpinMessageCommand {
-            val userId = authentication.name.toLong()
+            val userId = authentication.extractUserIdAsLong()
             return of(messageId, userId)
         }
     }

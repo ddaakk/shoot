@@ -1,6 +1,7 @@
 package com.stark.shoot.application.port.`in`.user.friend.command
 
 import com.stark.shoot.domain.shared.UserId
+import com.stark.shoot.infrastructure.util.extractUserIdAsLong
 import org.springframework.security.core.Authentication
 
 /**
@@ -19,7 +20,7 @@ data class RemoveFriendCommand(
         }
         
         fun of(authentication: Authentication, friendId: Long): RemoveFriendCommand {
-            val userId = authentication.name.toLong()
+            val userId = authentication.extractUserIdAsLong()
             return of(userId, friendId)
         }
     }

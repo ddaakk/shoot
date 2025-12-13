@@ -2,6 +2,7 @@ package com.stark.shoot.application.port.`in`.message.schedule.command
 
 import com.stark.shoot.domain.shared.UserId
 import org.springframework.security.core.Authentication
+import com.stark.shoot.infrastructure.util.extractUserIdAsLong
 import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneId
@@ -26,7 +27,7 @@ data class UpdateScheduledMessageCommand(
         }
         
         fun of(scheduledMessageId: String, authentication: Authentication, newContent: String, newScheduledAt: LocalDateTime?): UpdateScheduledMessageCommand {
-            val userId = authentication.name.toLong()
+            val userId = authentication.extractUserIdAsLong()
             val newScheduledInstant = newScheduledAt?.atZone(ZoneId.systemDefault())?.toInstant()
             return of(scheduledMessageId, userId, newContent, newScheduledInstant)
         }

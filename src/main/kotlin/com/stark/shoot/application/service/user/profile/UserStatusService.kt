@@ -9,6 +9,7 @@ import com.stark.shoot.domain.user.type.UserStatus
 import com.stark.shoot.domain.shared.UserId
 import com.stark.shoot.infrastructure.annotation.UseCase
 import com.stark.shoot.infrastructure.exception.web.ResourceNotFoundException
+import com.stark.shoot.infrastructure.util.extractUserIdAsLong
 import org.springframework.transaction.annotation.Transactional
 import java.time.Instant
 
@@ -29,7 +30,7 @@ class UserStatusService(
         command: UpdateUserStatusCommand
     ): User {
         // 인증 정보에서 사용자 ID 추출
-        val userId = UserId.from(command.authentication.name.toLong())
+        val userId = UserId.from(command.authentication.extractUserIdAsLong())
 
         // 사용자 정보 조회
         val user = userQueryPort.findUserById(userId)

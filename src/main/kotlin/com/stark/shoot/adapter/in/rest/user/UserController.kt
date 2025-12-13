@@ -9,6 +9,7 @@ import com.stark.shoot.application.port.`in`.user.UserCreateUseCase
 import com.stark.shoot.application.port.`in`.user.UserDeleteUseCase
 import com.stark.shoot.application.port.`in`.user.command.CreateUserCommand
 import com.stark.shoot.application.port.`in`.user.command.DeleteUserCommand
+import com.stark.shoot.infrastructure.util.extractUserIdAsLong
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
@@ -71,7 +72,7 @@ class UserController(
     fun deleteUser(
         authentication: Authentication
     ): ResponseDto<Unit> {
-        val userId = authentication.name.toLong()
+        val userId = authentication.extractUserIdAsLong()
         val command = DeleteUserCommand.of(userId)
         userDeleteUseCase.deleteUser(command)
         return ResponseDto.success(Unit, "회원 탈퇴가 완료되었습니다.")

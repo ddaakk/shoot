@@ -4,6 +4,7 @@ import com.stark.shoot.adapter.`in`.rest.dto.message.schedule.ScheduleMessageReq
 import com.stark.shoot.domain.chatroom.vo.ChatRoomId
 import com.stark.shoot.domain.shared.UserId
 import org.springframework.security.core.Authentication
+import com.stark.shoot.infrastructure.util.extractUserIdAsLong
 import java.time.Instant
 import java.time.ZoneId
 
@@ -25,7 +26,7 @@ data class ScheduleMessageCommand(
         }
 
         fun of(request: ScheduleMessageRequest, authentication: Authentication): ScheduleMessageCommand {
-            val userId = authentication.name.toLong()
+            val userId = authentication.extractUserIdAsLong()
             val scheduledInstant = request.scheduledAt.atZone(ZoneId.systemDefault()).toInstant()
             return of(request.roomId, userId, request.content, scheduledInstant)
         }

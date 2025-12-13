@@ -2,6 +2,7 @@ package com.stark.shoot.application.port.`in`.message.pin.command
 
 import com.stark.shoot.domain.chat.message.vo.MessageId
 import com.stark.shoot.domain.shared.UserId
+import com.stark.shoot.infrastructure.util.extractUserIdAsLong
 import org.springframework.security.core.Authentication
 
 /**
@@ -20,7 +21,7 @@ data class PinMessageCommand(
         }
         
         fun of(messageId: String, authentication: Authentication): PinMessageCommand {
-            val userId = authentication.name.toLong()
+            val userId = authentication.extractUserIdAsLong()
             return of(messageId, userId)
         }
     }

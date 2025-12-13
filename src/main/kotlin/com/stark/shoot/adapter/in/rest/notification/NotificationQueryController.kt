@@ -7,6 +7,7 @@ import com.stark.shoot.application.port.`in`.notification.command.*
 import com.stark.shoot.domain.notification.type.NotificationType
 import com.stark.shoot.domain.notification.type.SourceType
 import com.stark.shoot.domain.shared.UserId
+import com.stark.shoot.infrastructure.util.extractUserIdAsLong
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.security.core.Authentication
@@ -33,7 +34,7 @@ class NotificationQueryController(
         @RequestParam(defaultValue = "20") limit: Int,
         @RequestParam(defaultValue = "0") offset: Int
     ): ResponseDto<List<NotificationResponse>> {
-        val userId = authentication.name.toLong()
+        val userId = authentication.extractUserIdAsLong()
         val command = GetNotificationsCommand(
             userId = UserId.from(userId),
             limit = limit,
@@ -58,7 +59,7 @@ class NotificationQueryController(
         @RequestParam(defaultValue = "20") limit: Int,
         @RequestParam(defaultValue = "0") offset: Int
     ): ResponseDto<List<NotificationResponse>> {
-        val userId = authentication.name.toLong()
+        val userId = authentication.extractUserIdAsLong()
         val command = GetUnreadNotificationsCommand(
             userId = UserId.from(userId),
             limit = limit,
@@ -77,7 +78,7 @@ class NotificationQueryController(
     )
     @GetMapping("/unread/count")
     fun getUnreadNotificationCount(authentication: Authentication): ResponseDto<Int> {
-        val userId = authentication.name.toLong()
+        val userId = authentication.extractUserIdAsLong()
         val command = GetUnreadNotificationCountCommand(
             userId = UserId.from(userId)
         )
@@ -101,7 +102,7 @@ class NotificationQueryController(
         @RequestParam(defaultValue = "20") limit: Int,
         @RequestParam(defaultValue = "0") offset: Int
     ): ResponseDto<List<NotificationResponse>> {
-        val userId = authentication.name.toLong()
+        val userId = authentication.extractUserIdAsLong()
         val notificationType = NotificationType.valueOf(type)
         val command = GetNotificationsByTypeCommand(
             userId = UserId.from(userId),
@@ -130,7 +131,7 @@ class NotificationQueryController(
         @RequestParam(defaultValue = "20") limit: Int,
         @RequestParam(defaultValue = "0") offset: Int
     ): ResponseDto<List<NotificationResponse>> {
-        val userId = authentication.name.toLong()
+        val userId = authentication.extractUserIdAsLong()
         val source = SourceType.valueOf(sourceType)
         val command = GetNotificationsBySourceCommand(
             userId = UserId.from(userId),

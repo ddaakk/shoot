@@ -8,6 +8,7 @@ import com.stark.shoot.application.port.`in`.chatroom.group.command.LeaveGroupCh
 import com.stark.shoot.application.port.`in`.chatroom.group.command.ManageGroupParticipantsCommand
 import com.stark.shoot.application.port.`in`.chatroom.group.command.UpdateGroupChatTitleCommand
 import com.stark.shoot.infrastructure.config.socket.StompPrincipal
+import com.stark.shoot.infrastructure.util.extractUserIdAsLong
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.messaging.handler.annotation.MessageMapping
 import org.springframework.messaging.handler.annotation.Payload
@@ -33,7 +34,7 @@ class GroupChatStompHandler(
         @Payload actionDto: GroupChatActionDto,
         @AuthenticationPrincipal principal: StompPrincipal
     ) {
-        val userId = principal.name.toLong()
+        val userId = principal.extractUserIdAsLong()
         logger.info { "Group chat action received: ${actionDto.action} from user $userId" }
 
         try {

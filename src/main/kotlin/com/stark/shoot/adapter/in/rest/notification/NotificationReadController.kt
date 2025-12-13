@@ -11,6 +11,7 @@ import com.stark.shoot.domain.notification.type.NotificationType
 import com.stark.shoot.domain.notification.type.SourceType
 import com.stark.shoot.domain.notification.vo.NotificationId
 import com.stark.shoot.domain.shared.UserId
+import com.stark.shoot.infrastructure.util.extractUserIdAsLong
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.security.core.Authentication
@@ -35,7 +36,7 @@ class NotificationReadController(
         authentication: Authentication,
         @PathVariable notificationId: String
     ): ResponseDto<NotificationResponse> {
-        val userId = authentication.name.toLong()
+        val userId = authentication.extractUserIdAsLong()
         val command = MarkNotificationAsReadCommand(
             notificationId = NotificationId.from(notificationId),
             userId = UserId.from(userId)
@@ -54,7 +55,7 @@ class NotificationReadController(
     )
     @PutMapping("/read/all")
     fun markAllAsRead(authentication: Authentication): ResponseDto<Int> {
-        val userId = authentication.name.toLong()
+        val userId = authentication.extractUserIdAsLong()
         val command = MarkAllNotificationsAsReadCommand(
             userId = UserId.from(userId)
         )
@@ -75,7 +76,7 @@ class NotificationReadController(
         authentication: Authentication,
         @PathVariable type: String
     ): ResponseDto<Int> {
-        val userId = authentication.name.toLong()
+        val userId = authentication.extractUserIdAsLong()
         val notificationType = NotificationType.valueOf(type)
         val command = MarkAllNotificationsByTypeAsReadCommand(
             userId = UserId.from(userId),
@@ -99,7 +100,7 @@ class NotificationReadController(
         @PathVariable sourceType: String,
         @RequestParam(required = false) sourceId: String?
     ): ResponseDto<Int> {
-        val userId = authentication.name.toLong()
+        val userId = authentication.extractUserIdAsLong()
         val source = SourceType.valueOf(sourceType)
         val command = MarkAllNotificationsBySourceAsReadCommand(
             userId = UserId.from(userId),
