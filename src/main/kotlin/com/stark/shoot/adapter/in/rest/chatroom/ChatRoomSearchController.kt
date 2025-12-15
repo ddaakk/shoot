@@ -1,7 +1,7 @@
 package com.stark.shoot.adapter.`in`.rest.chatroom
 
 import com.stark.shoot.adapter.`in`.rest.dto.ResponseDto
-import com.stark.shoot.adapter.`in`.rest.dto.chatroom.ChatRoomResponse
+import com.stark.shoot.application.dto.chatroom.ChatRoomResponseDto as ChatRoomResponse
 import com.stark.shoot.application.port.`in`.chatroom.ChatRoomSearchUseCase
 import com.stark.shoot.application.port.`in`.chatroom.FindChatRoomUseCase
 import com.stark.shoot.application.port.`in`.chatroom.command.FindDirectChatCommand

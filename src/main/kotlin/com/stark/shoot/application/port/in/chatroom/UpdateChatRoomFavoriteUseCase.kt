@@ -1,6 +1,6 @@
 package com.stark.shoot.application.port.`in`.chatroom
 
-import com.stark.shoot.adapter.`in`.rest.dto.chatroom.ChatRoomResponse
+import com.stark.shoot.application.dto.chatroom.ChatRoomResponseDto
 import com.stark.shoot.application.port.`in`.chatroom.command.UpdateFavoriteStatusCommand
 
 interface UpdateChatRoomFavoriteUseCase {
@@ -10,5 +10,5 @@ interface UpdateChatRoomFavoriteUseCase {
      * @param command 즐겨찾기 상태 업데이트 커맨드
      * @return 업데이트된 채팅방 정보
      */
-    fun updateFavoriteStatus(command: UpdateFavoriteStatusCommand): ChatRoomResponse
+    fun updateFavoriteStatus(command: UpdateFavoriteStatusCommand): ChatRoomResponseDto
 }

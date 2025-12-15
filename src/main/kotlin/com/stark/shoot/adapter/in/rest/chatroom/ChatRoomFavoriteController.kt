@@ -2,7 +2,7 @@ package com.stark.shoot.adapter.`in`.rest.chatroom
 
 import com.stark.shoot.adapter.`in`.rest.dto.ResponseDto
 import com.stark.shoot.adapter.`in`.rest.dto.chatroom.ChatRoomFavoriteRequest
-import com.stark.shoot.adapter.`in`.rest.dto.chatroom.ChatRoomResponse
+import com.stark.shoot.application.dto.chatroom.ChatRoomResponseDto as ChatRoomResponse
 import com.stark.shoot.application.port.`in`.chatroom.UpdateChatRoomFavoriteUseCase
 import com.stark.shoot.application.port.`in`.chatroom.command.UpdateFavoriteStatusCommand
 import io.swagger.v3.oas.annotations.Operation

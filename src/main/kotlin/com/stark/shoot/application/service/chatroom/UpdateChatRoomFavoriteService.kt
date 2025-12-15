@@ -1,6 +1,7 @@
 package com.stark.shoot.application.service.chatroom
 
-import com.stark.shoot.adapter.`in`.rest.dto.chatroom.ChatRoomResponse
+import com.stark.shoot.application.dto.chatroom.ChatRoomResponseDto
+import com.stark.shoot.application.mapper.chatroom.ChatRoomDtoMapper
 import com.stark.shoot.application.port.`in`.chatroom.UpdateChatRoomFavoriteUseCase
 import com.stark.shoot.application.port.`in`.chatroom.command.UpdateFavoriteStatusCommand
 import com.stark.shoot.application.port.out.chatroom.ChatRoomQueryPort
@@ -20,7 +21,8 @@ class UpdateChatRoomFavoriteService(
     private val chatRoomQueryPort: ChatRoomQueryPort,
     private val favoriteCommandPort: ChatRoomFavoriteCommandPort,
     private val favoriteQueryPort: ChatRoomFavoriteQueryPort,
-    private val chatRoomConstants: ChatRoomConstants
+    private val chatRoomConstants: ChatRoomConstants,
+    private val chatRoomDtoMapper: ChatRoomDtoMapper
 ) : UpdateChatRoomFavoriteUseCase {
 
     /**
@@ -33,7 +35,7 @@ class UpdateChatRoomFavoriteService(
      * @param command 즐겨찾기 상태 업데이트 커맨드
      * @return 업데이트된 채팅방 정보
      */
-    override fun updateFavoriteStatus(command: UpdateFavoriteStatusCommand): ChatRoomResponse {
+    override fun updateFavoriteStatus(command: UpdateFavoriteStatusCommand): ChatRoomResponseDto {
         val roomId = command.roomId
         val userId = command.userId
         val isFavorite = command.isFavorite
@@ -87,6 +89,6 @@ class UpdateChatRoomFavoriteService(
         val finalFavorite = favoriteQueryPort.findByUserIdAndChatRoomId(userId, roomId)
         val finalIsPinned = finalFavorite?.isPinned ?: false
 
-        return ChatRoomResponse.from(chatRoom, userId.value, finalIsPinned)
+        return chatRoomDtoMapper.toSimpleDto(chatRoom, userId.value, finalIsPinned)
     }
 }

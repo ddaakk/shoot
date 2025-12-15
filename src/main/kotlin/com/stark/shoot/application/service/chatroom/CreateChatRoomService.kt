@@ -1,6 +1,7 @@
 package com.stark.shoot.application.service.chatroom
 
-import com.stark.shoot.adapter.`in`.rest.dto.chatroom.ChatRoomResponse
+import com.stark.shoot.application.dto.chatroom.ChatRoomResponseDto
+import com.stark.shoot.application.mapper.chatroom.ChatRoomDtoMapper
 import com.stark.shoot.application.port.`in`.chatroom.CreateChatRoomUseCase
 import com.stark.shoot.application.port.`in`.chatroom.command.CreateDirectChatCommand
 import com.stark.shoot.application.port.out.chatroom.ChatRoomCommandPort
@@ -26,6 +27,7 @@ class CreateChatRoomService(
     private val chatRoomEventService: ChatRoomEventService,
     private val chatRoomDomainService: ChatRoomDomainService,
     private val redisLockManager: RedisLockManager,
+    private val chatRoomDtoMapper: ChatRoomDtoMapper,
 ) : CreateChatRoomUseCase {
 
     /**
@@ -35,7 +37,7 @@ class CreateChatRoomService(
      * @param command 직접 채팅 생성 커맨드
      * @return ChatRoomResponse 생성된 채팅방 정보
      */
-    override fun createDirectChat(command: CreateDirectChatCommand): ChatRoomResponse {
+    override fun createDirectChat(command: CreateDirectChatCommand): ChatRoomResponseDto {
         val userId = command.userId
         val friendId = command.friendId
 
@@ -57,7 +59,7 @@ class CreateChatRoomService(
             val existingRoom = chatRoomDomainService.findDirectChatBetween(existingRooms, userId, friendId)
 
             // 이미 존재하는 채팅방이 있으면 반환
-            if (existingRoom != null) return@withLock ChatRoomResponse.from(existingRoom, userId.value)
+            if (existingRoom != null) return@withLock chatRoomDtoMapper.toSimpleDto(existingRoom, userId.value)
 
             // 3. 새 1:1 채팅방 생성 및 저장
             val savedRoom = registerNewDirectChatRoom(userId.value, friendId.value, friend)
@@ -65,7 +67,7 @@ class CreateChatRoomService(
             // 4. 채팅방 생성 이벤트 발행
             publishChatRoomCreatedEvent(savedRoom)
 
-            ChatRoomResponse.from(savedRoom, userId.value)
+            chatRoomDtoMapper.toSimpleDto(savedRoom, userId.value)
         }
     }
 

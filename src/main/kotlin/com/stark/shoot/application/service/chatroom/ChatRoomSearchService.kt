@@ -1,7 +1,7 @@
 package com.stark.shoot.application.service.chatroom
 
-import com.stark.shoot.adapter.`in`.rest.dto.chatroom.ChatRoomResponse
-import com.stark.shoot.infrastructure.mapper.ChatRoomResponseMapper
+import com.stark.shoot.application.dto.chatroom.ChatRoomResponseDto
+import com.stark.shoot.application.mapper.chatroom.ChatRoomDtoMapper
 import com.stark.shoot.application.port.`in`.chatroom.ChatRoomSearchUseCase
 import com.stark.shoot.application.port.`in`.chatroom.command.SearchChatRoomsCommand
 import com.stark.shoot.application.port.out.chatroom.ChatRoomQueryPort
@@ -12,16 +12,16 @@ import com.stark.shoot.infrastructure.annotation.UseCase
 class ChatRoomSearchService(
     private val chatRoomQueryPort: ChatRoomQueryPort,
     private val chatRoomDomainService: ChatRoomDomainService,
-    private val chatRoomResponseMapper: ChatRoomResponseMapper,
+    private val chatRoomDtoMapper: ChatRoomDtoMapper,
 ) : ChatRoomSearchUseCase {
 
     /**
      * 채팅방 검색
      *
      * @param command 채팅방 검색 커맨드
-     * @return ChatRoomResponse 채팅방 목록
+     * @return ChatRoomResponseDto 채팅방 목록
      */
-    override fun searchChatRooms(command: SearchChatRoomsCommand): List<ChatRoomResponse> {
+    override fun searchChatRooms(command: SearchChatRoomsCommand): List<ChatRoomResponseDto> {
         val userId = command.userId
         val query = command.query
         val type = command.type
@@ -38,7 +38,7 @@ class ChatRoomSearchService(
         val lastMessages = chatRoomDomainService.prepareLastMessages(filteredRooms)
         val timestamps = chatRoomDomainService.prepareTimestamps(filteredRooms)
 
-        // ChatRoomResponse로 변환하여 반환
-        return chatRoomResponseMapper.toResponseList(filteredRooms, userId, titles, lastMessages, timestamps)
+        // ChatRoomResponseDto로 변환하여 반환
+        return chatRoomDtoMapper.toResponseList(filteredRooms, userId, titles, lastMessages, timestamps)
     }
 }

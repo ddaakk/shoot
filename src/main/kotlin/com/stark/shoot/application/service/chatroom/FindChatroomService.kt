@@ -1,7 +1,7 @@
 package com.stark.shoot.application.service.chatroom
 
-import com.stark.shoot.adapter.`in`.rest.dto.chatroom.ChatRoomResponse
-import com.stark.shoot.infrastructure.mapper.ChatRoomResponseMapper
+import com.stark.shoot.application.dto.chatroom.ChatRoomResponseDto
+import com.stark.shoot.application.mapper.chatroom.ChatRoomDtoMapper
 import com.stark.shoot.application.port.`in`.chatroom.FindChatRoomUseCase
 import com.stark.shoot.application.port.`in`.chatroom.command.FindDirectChatCommand
 import com.stark.shoot.application.port.`in`.chatroom.command.GetChatRoomsCommand
@@ -17,7 +17,7 @@ import org.springframework.transaction.annotation.Transactional
 class FindChatroomService(
     private val chatRoomQueryPort: ChatRoomQueryPort,
     private val messageQueryPort: MessageQueryPort,
-    private val chatRoomResponseMapper: ChatRoomResponseMapper,
+    private val chatRoomDtoMapper: ChatRoomDtoMapper,
     private val chatRoomDomainService: ChatRoomDomainService
 ) : FindChatRoomUseCase {
 
@@ -29,7 +29,7 @@ class FindChatroomService(
      * @param command 채팅방 목록 조회 커맨드
      * @return ChatRoomResponse 채팅방 목록
      */
-    override fun getChatRoomsForUser(command: GetChatRoomsCommand): List<ChatRoomResponse> {
+    override fun getChatRoomsForUser(command: GetChatRoomsCommand): List<ChatRoomResponseDto> {
         val userId = command.userId
 
         // 사용자가 참여한 채팅방 목록을 조회합니다.
@@ -43,8 +43,8 @@ class FindChatroomService(
 
         val timestamps = chatRoomDomainService.prepareTimestamps(chatRooms)
 
-        // 채팅방 목록을 ChatRoomResponse로 변환하여 반환합니다.
-        return chatRoomResponseMapper.toResponseList(chatRooms, userId, titles, lastMessages, timestamps)
+        // 채팅방 목록을 ChatRoomResponseDto로 변환하여 반환합니다.
+        return chatRoomDtoMapper.toResponseList(chatRooms, userId, titles, lastMessages, timestamps)
     }
 
     /**
@@ -115,7 +115,7 @@ class FindChatroomService(
      * @param command 직접 채팅 찾기 커맨드
      * @return 두 사용자 간의 1:1 채팅방 응답 객체, 없으면 null
      */
-    override fun findDirectChatBetweenUsers(command: FindDirectChatCommand): ChatRoomResponse? {
+    override fun findDirectChatBetweenUsers(command: FindDirectChatCommand): ChatRoomResponseDto? {
         val userId1 = command.userId1
         val userId2 = command.userId2
 
@@ -133,7 +133,7 @@ class FindChatroomService(
             val lastMessage = it.createLastMessageText()
             val timestamp = it.formatTimestamp()
 
-            chatRoomResponseMapper.toResponse(it, userId1, title, lastMessage, timestamp)
+            chatRoomDtoMapper.toDto(it, userId1, title, lastMessage, timestamp)
         }
     }
 
