@@ -1,5 +1,7 @@
 package com.stark.shoot.application.service.notification
 
+import com.stark.shoot.application.dto.notification.NotificationResponseDto
+import com.stark.shoot.application.mapper.notification.NotificationDtoMapper
 import com.stark.shoot.application.port.`in`.notification.NotificationManagementUseCase
 import com.stark.shoot.application.port.`in`.notification.command.*
 import com.stark.shoot.application.port.out.notification.NotificationCommandPort
@@ -25,7 +27,8 @@ import org.springframework.transaction.annotation.Transactional
 class NotificationManagementService(
     private val notificationQueryPort: NotificationQueryPort,
     private val notificationCommandPort: NotificationCommandPort,
-    private val notificationDomainService: NotificationDomainService
+    private val notificationDomainService: NotificationDomainService,
+    private val notificationDtoMapper: NotificationDtoMapper
 ) : NotificationManagementUseCase {
 
     private val logger = KotlinLogging.logger {}
@@ -38,7 +41,7 @@ class NotificationManagementService(
      * @throws ResourceNotFoundException 알림이 존재하지 않는 경우
      * @throws NotificationException 알림이 해당 유저의 것이 아닌 경우
      */
-    override fun markAsRead(command: MarkNotificationAsReadCommand): Notification {
+    override fun markAsRead(command: MarkNotificationAsReadCommand): NotificationResponseDto {
         // 알림 조회
         val notification = notificationQueryPort.loadNotificationById(command.notificationId)
             ?: throw ResourceNotFoundException("알림을 찾을 수 없습니다: ${command.notificationId}")
@@ -48,7 +51,7 @@ class NotificationManagementService(
 
         // 이미 읽은 알림인 경우 바로 반환
         if (notification.isRead) {
-            return notification
+            return notificationDtoMapper.toDto(notification)
         }
 
         // 도메인 모델의 메서드를 사용하여 읽음 처리 (자신의 상태 변경)
@@ -57,7 +60,7 @@ class NotificationManagementService(
         // 저장
         val savedNotification = notificationCommandPort.saveNotification(notification)
 
-        return savedNotification
+        return notificationDtoMapper.toDto(savedNotification)
     }
 
     /**

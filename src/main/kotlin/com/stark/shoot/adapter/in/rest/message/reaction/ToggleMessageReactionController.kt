@@ -1,8 +1,11 @@
 package com.stark.shoot.adapter.`in`.rest.message.reaction
 
 import com.stark.shoot.adapter.`in`.rest.dto.ResponseDto
+import com.stark.shoot.application.dto.message.reaction.ReactionResponseDto
+import com.stark.shoot.application.dto.message.reaction.ReactionInfoDto as AppReactionInfoDto
 import com.stark.shoot.adapter.`in`.rest.dto.message.reaction.ReactionRequest
 import com.stark.shoot.adapter.`in`.rest.dto.message.reaction.ReactionResponse
+import com.stark.shoot.adapter.`in`.rest.dto.message.reaction.ReactionInfoDto
 import com.stark.shoot.application.port.`in`.message.reaction.ToggleMessageReactionUseCase
 import com.stark.shoot.application.port.`in`.message.reaction.command.ToggleMessageReactionCommand
 import io.swagger.v3.oas.annotations.Operation
@@ -36,7 +39,22 @@ class ToggleMessageReactionController(
         val command = ToggleMessageReactionCommand.of(messageId, authentication, request.reactionType)
         val response = toggleMessageReactionUseCase.toggleReaction(command)
 
-        return ResponseDto.success(response, "반응이 토글되었습니다.")
+        return ResponseDto.success(response.toAdapterDto(), "반응이 토글되었습니다.")
     }
+
+    // Application DTO → Adapter DTO 변환 확장 함수
+    private fun ReactionResponseDto.toAdapterDto() = ReactionResponse(
+        messageId = this.messageId,
+        reactions = this.reactions.map { it.toAdapterDto() },
+        updatedAt = this.updatedAt
+    )
+
+    private fun AppReactionInfoDto.toAdapterDto() = ReactionInfoDto(
+        reactionType = this.reactionType,
+        emoji = this.emoji,
+        description = this.description,
+        userIds = this.userIds,
+        count = this.count
+    )
 
 }

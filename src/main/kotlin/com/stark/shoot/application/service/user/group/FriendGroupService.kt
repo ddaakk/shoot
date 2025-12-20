@@ -1,12 +1,13 @@
 package com.stark.shoot.application.service.user.group
 
+import com.stark.shoot.application.dto.group.FriendGroupResponseDto
+import com.stark.shoot.application.mapper.group.FriendGroupDtoMapper
 import com.stark.shoot.application.port.`in`.user.group.FindFriendGroupUseCase
 import com.stark.shoot.application.port.`in`.user.group.ManageFriendGroupUseCase
 import com.stark.shoot.application.port.`in`.user.group.command.*
 import com.stark.shoot.application.port.out.user.UserQueryPort
 import com.stark.shoot.application.port.out.user.group.FriendGroupCommandPort
 import com.stark.shoot.application.port.out.user.group.FriendGroupQueryPort
-import com.stark.shoot.domain.social.FriendGroup
 import com.stark.shoot.domain.social.service.group.FriendGroupDomainService
 import com.stark.shoot.infrastructure.annotation.UseCase
 import com.stark.shoot.infrastructure.exception.web.ResourceNotFoundException
@@ -19,31 +20,35 @@ class FriendGroupService(
     private val friendGroupQueryPort: FriendGroupQueryPort,
     private val friendGroupCommandPort: FriendGroupCommandPort,
     private val domainService: FriendGroupDomainService,
+    private val friendGroupDtoMapper: FriendGroupDtoMapper
 ) : ManageFriendGroupUseCase, FindFriendGroupUseCase {
 
-    override fun createGroup(command: CreateGroupCommand): FriendGroup {
+    override fun createGroup(command: CreateGroupCommand): FriendGroupResponseDto {
         if (!userQueryPort.existsById(command.ownerId)) {
             throw ResourceNotFoundException("사용자를 찾을 수 없습니다: ${command.ownerId}")
         }
         val group = domainService.create(command.ownerId, command.name, command.description)
-        return friendGroupCommandPort.save(group)
+        val savedGroup = friendGroupCommandPort.save(group)
+        return friendGroupDtoMapper.toDto(savedGroup)
     }
 
-    override fun renameGroup(command: RenameGroupCommand): FriendGroup {
+    override fun renameGroup(command: RenameGroupCommand): FriendGroupResponseDto {
         val group = friendGroupQueryPort.findById(command.groupId)
             ?: throw ResourceNotFoundException("그룹을 찾을 수 없습니다: ${command.groupId}")
         val updated = domainService.rename(group, command.newName)
-        return friendGroupCommandPort.save(updated)
+        val savedGroup = friendGroupCommandPort.save(updated)
+        return friendGroupDtoMapper.toDto(savedGroup)
     }
 
-    override fun updateDescription(command: UpdateDescriptionCommand): FriendGroup {
+    override fun updateDescription(command: UpdateDescriptionCommand): FriendGroupResponseDto {
         val group = friendGroupQueryPort.findById(command.groupId)
             ?: throw ResourceNotFoundException("그룹을 찾을 수 없습니다: ${command.groupId}")
         val updated = domainService.updateDescription(group, command.description)
-        return friendGroupCommandPort.save(updated)
+        val savedGroup = friendGroupCommandPort.save(updated)
+        return friendGroupDtoMapper.toDto(savedGroup)
     }
 
-    override fun addMember(command: AddMemberCommand): FriendGroup {
+    override fun addMember(command: AddMemberCommand): FriendGroupResponseDto {
         if (!userQueryPort.existsById(command.memberId)) {
             throw ResourceNotFoundException("사용자를 찾을 수 없습니다: ${command.memberId}")
         }
@@ -53,26 +58,30 @@ class FriendGroupService(
 
         domainService.addMember(group, command.memberId)
 
-        return friendGroupCommandPort.save(group)
+        val savedGroup = friendGroupCommandPort.save(group)
+        return friendGroupDtoMapper.toDto(savedGroup)
     }
 
-    override fun removeMember(command: RemoveMemberCommand): FriendGroup {
+    override fun removeMember(command: RemoveMemberCommand): FriendGroupResponseDto {
         val group = friendGroupQueryPort.findById(command.groupId)
             ?: throw ResourceNotFoundException("그룹을 찾을 수 없습니다: ${command.groupId}")
 
         domainService.removeMember(group, command.memberId)
-        return friendGroupCommandPort.save(group)
+        val savedGroup = friendGroupCommandPort.save(group)
+        return friendGroupDtoMapper.toDto(savedGroup)
     }
 
     override fun deleteGroup(command: DeleteGroupCommand) {
         friendGroupCommandPort.deleteById(command.groupId)
     }
 
-    override fun getGroup(command: GetGroupCommand): FriendGroup? {
-        return friendGroupQueryPort.findById(command.groupId)
+    override fun getGroup(command: GetGroupCommand): FriendGroupResponseDto? {
+        val group = friendGroupQueryPort.findById(command.groupId)
+        return group?.let { friendGroupDtoMapper.toDto(it) }
     }
 
-    override fun getGroups(command: GetGroupsCommand): List<FriendGroup> {
-        return friendGroupQueryPort.findByOwnerId(command.ownerId)
+    override fun getGroups(command: GetGroupsCommand): List<FriendGroupResponseDto> {
+        val groups = friendGroupQueryPort.findByOwnerId(command.ownerId)
+        return friendGroupDtoMapper.toDtoList(groups)
     }
 }

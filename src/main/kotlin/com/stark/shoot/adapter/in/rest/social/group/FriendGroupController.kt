@@ -4,7 +4,7 @@ import com.stark.shoot.adapter.`in`.rest.dto.ResponseDto
 import com.stark.shoot.adapter.`in`.rest.dto.social.group.AddMemberInGroupRequest
 import com.stark.shoot.adapter.`in`.rest.dto.social.group.CreateGroupRequest
 import com.stark.shoot.adapter.`in`.rest.dto.social.group.FriendGroupResponse
-import com.stark.shoot.adapter.`in`.rest.dto.social.group.toResponse
+import com.stark.shoot.application.dto.group.FriendGroupResponseDto
 import com.stark.shoot.application.port.`in`.user.group.FindFriendGroupUseCase
 import com.stark.shoot.application.port.`in`.user.group.ManageFriendGroupUseCase
 import com.stark.shoot.application.port.`in`.user.group.command.*
@@ -25,7 +25,7 @@ class FriendGroupController(
     fun createGroup(@RequestBody request: CreateGroupRequest): ResponseDto<FriendGroupResponse> {
         val command = CreateGroupCommand.of(request)
         val group = manageUseCase.createGroup(command)
-        return ResponseDto.success(group.toResponse())
+        return ResponseDto.success(group.toAdapterDto())
     }
 
     @Operation(summary = "그룹 이름 변경")
@@ -36,7 +36,7 @@ class FriendGroupController(
     ): ResponseDto<FriendGroupResponse> {
         val command = RenameGroupCommand.of(groupId, name)
         val group = manageUseCase.renameGroup(command)
-        return ResponseDto.success(group.toResponse())
+        return ResponseDto.success(group.toAdapterDto())
     }
 
     @Operation(summary = "그룹 설명 수정")
@@ -47,7 +47,7 @@ class FriendGroupController(
     ): ResponseDto<FriendGroupResponse> {
         val command = UpdateDescriptionCommand.of(groupId, description)
         val group = manageUseCase.updateDescription(command)
-        return ResponseDto.success(group.toResponse())
+        return ResponseDto.success(group.toAdapterDto())
     }
 
     @Operation(summary = "멤버 추가")
@@ -55,7 +55,7 @@ class FriendGroupController(
     fun addMember(@RequestBody request: AddMemberInGroupRequest): ResponseDto<FriendGroupResponse> {
         val command = AddMemberCommand.of(request)
         val group = manageUseCase.addMember(command)
-        return ResponseDto.success(group.toResponse())
+        return ResponseDto.success(group.toAdapterDto())
     }
 
     @Operation(summary = "멤버 제거")
@@ -66,7 +66,7 @@ class FriendGroupController(
     ): ResponseDto<FriendGroupResponse> {
         val command = RemoveMemberCommand.of(groupId, memberId)
         val group = manageUseCase.removeMember(command)
-        return ResponseDto.success(group.toResponse())
+        return ResponseDto.success(group.toAdapterDto())
     }
 
     @Operation(summary = "그룹 삭제")
@@ -81,7 +81,7 @@ class FriendGroupController(
     @GetMapping("/{groupId}")
     fun getGroup(@PathVariable groupId: Long): ResponseDto<FriendGroupResponse?> {
         val command = GetGroupCommand.of(groupId)
-        val group = findUseCase.getGroup(command)?.toResponse()
+        val group = findUseCase.getGroup(command)?.toAdapterDto()
         return ResponseDto.success(group)
     }
 
@@ -90,8 +90,17 @@ class FriendGroupController(
     fun getGroups(@RequestParam ownerId: Long): ResponseDto<List<FriendGroupResponse>> {
         val command = GetGroupsCommand.of(ownerId)
         val groups = findUseCase.getGroups(command)
-            .map { it.toResponse() }
+            .map { it.toAdapterDto() }
         return ResponseDto.success(groups)
     }
+
+    // Application DTO → Adapter DTO 변환 확장 함수
+    private fun FriendGroupResponseDto.toAdapterDto() = FriendGroupResponse(
+        id = this.id,
+        ownerId = this.ownerId,
+        name = this.name,
+        description = this.description,
+        memberIds = this.memberIds
+    )
 
 }

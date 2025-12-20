@@ -1,6 +1,7 @@
 package com.stark.shoot.adapter.`in`.rest.message.pin
 
 import com.stark.shoot.adapter.`in`.rest.dto.ResponseDto
+import com.stark.shoot.application.dto.message.pin.PinResponseDto
 import com.stark.shoot.adapter.`in`.rest.dto.message.pin.PinResponse
 import com.stark.shoot.application.port.`in`.message.pin.MessagePinUseCase
 import com.stark.shoot.application.port.`in`.message.pin.command.PinMessageCommand
@@ -30,7 +31,7 @@ class MessagePinController(
         val result = messagePinUseCase.pinMessage(command)
 
         return ResponseDto.success(
-            PinResponse.from(result.message, result.messagePin),
+            result.toAdapterDto(),
             "메시지가 고정되었습니다."
         )
     }
@@ -48,9 +49,20 @@ class MessagePinController(
         val result = messagePinUseCase.unpinMessage(command)
 
         return ResponseDto.success(
-            PinResponse.from(result.message, result.messagePin),
+            result.toAdapterDto(),
             "메시지 고정이 해제되었습니다."
         )
     }
+
+    // Application DTO → Adapter DTO 변환 확장 함수
+    private fun PinResponseDto.toAdapterDto() = PinResponse(
+        messageId = this.messageId,
+        roomId = this.roomId,
+        isPinned = this.isPinned,
+        pinnedBy = this.pinnedBy,
+        pinnedAt = this.pinnedAt,
+        content = this.content,
+        updatedAt = this.updatedAt
+    )
 
 }

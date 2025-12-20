@@ -1,5 +1,7 @@
 package com.stark.shoot.application.service.message.pin
 
+import com.stark.shoot.application.dto.message.pin.PinnedMessagesResponseDto
+import com.stark.shoot.application.mapper.message.pin.MessagePinDtoMapper
 import com.stark.shoot.application.port.`in`.message.pin.GetPinnedMessageUseCase
 import com.stark.shoot.application.port.`in`.message.pin.command.GetPinnedMessagesCommand
 import com.stark.shoot.application.port.`in`.message.pin.result.PinnedMessagesResult
@@ -11,7 +13,8 @@ import com.stark.shoot.infrastructure.annotation.UseCase
 @UseCase
 class GetPinnedMessageService(
     private val messageQueryPort: MessageQueryPort,
-    private val messagePinQueryPort: MessagePinQueryPort
+    private val messagePinQueryPort: MessagePinQueryPort,
+    private val messagePinDtoMapper: MessagePinDtoMapper
 ) : GetPinnedMessageUseCase {
 
     /**
@@ -19,11 +22,11 @@ class GetPinnedMessageService(
      * MessagePin Aggregate를 통해 고정된 메시지 ID를 조회한 후, 메시지를 가져옵니다.
      *
      * @param command 고정 메시지 조회 커맨드
-     * @return 고정된 메시지와 MessagePin Aggregate 정보
+     * @return 고정된 메시지 목록 응답 DTO
      */
     override fun getPinnedMessages(
         command: GetPinnedMessagesCommand
-    ): PinnedMessagesResult {
+    ): PinnedMessagesResponseDto {
         // ChatRoomId 타입 변환 (chatroom.vo -> chat.vo)
         val chatRoomId = ChatChatRoomId.from(command.roomId.value)
 
@@ -32,9 +35,12 @@ class GetPinnedMessageService(
 
         // 고정된 메시지가 없으면 빈 결과 반환
         if (messagePins.isEmpty()) {
-            return PinnedMessagesResult(
-                messages = emptyList(),
-                messagePins = emptyList()
+            return messagePinDtoMapper.toPinnedMessagesResponseDto(
+                command.roomId.value,
+                PinnedMessagesResult(
+                    messages = emptyList(),
+                    messagePins = emptyList()
+                )
             )
         }
 
@@ -43,9 +49,12 @@ class GetPinnedMessageService(
             messageQueryPort.findById(pin.messageId)
         }
 
-        return PinnedMessagesResult(
-            messages = messages,
-            messagePins = messagePins
+        return messagePinDtoMapper.toPinnedMessagesResponseDto(
+            command.roomId.value,
+            PinnedMessagesResult(
+                messages = messages,
+                messagePins = messagePins
+            )
         )
     }
 

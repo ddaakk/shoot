@@ -1,6 +1,7 @@
 package com.stark.shoot.adapter.`in`.rest.social.recommand
 
 import com.stark.shoot.adapter.`in`.rest.dto.ResponseDto
+import com.stark.shoot.application.dto.friend.FriendResponseDto
 import com.stark.shoot.adapter.`in`.rest.dto.social.friend.FriendResponse
 import com.stark.shoot.application.port.`in`.user.friend.RecommendFriendsUseCase
 import com.stark.shoot.application.port.`in`.user.friend.command.GetRecommendedFriendsCommand
@@ -31,7 +32,15 @@ class UserRecommendController(
     ): ResponseDto<List<FriendResponse>> {
         val command = GetRecommendedFriendsCommand.of(userId, skip, limit)
         val recommendations = recommendFriendsUseCase.getRecommendedFriends(command)
-        return ResponseDto.success(recommendations)
+        return ResponseDto.success(recommendations.map { it.toAdapterDto() })
     }
+
+    // Application DTO → Adapter DTO 변환 확장 함수
+    private fun FriendResponseDto.toAdapterDto() = FriendResponse(
+        id = this.id,
+        username = this.username,
+        nickname = this.nickname,
+        profileImageUrl = this.profileImageUrl
+    )
 
 }

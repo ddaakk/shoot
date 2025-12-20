@@ -1,7 +1,10 @@
 package com.stark.shoot.adapter.`in`.rest.message.pin
 
 import com.stark.shoot.adapter.`in`.rest.dto.ResponseDto
+import com.stark.shoot.application.dto.message.pin.PinnedMessagesResponseDto
+import com.stark.shoot.application.dto.message.pin.PinnedMessageItemDto
 import com.stark.shoot.adapter.`in`.rest.dto.message.pin.PinnedMessagesResponse
+import com.stark.shoot.adapter.`in`.rest.dto.message.pin.PinnedMessageItem
 import com.stark.shoot.application.port.`in`.message.pin.GetPinnedMessageUseCase
 import com.stark.shoot.application.port.`in`.message.pin.command.GetPinnedMessagesCommand
 import io.swagger.v3.oas.annotations.Operation
@@ -29,9 +32,22 @@ class GetPinnedMessageController(
         val command = GetPinnedMessagesCommand.of(roomId)
         val result = getPinnedMessageUseCase.getPinnedMessages(command)
 
-        return ResponseDto.success(
-            PinnedMessagesResponse.from(roomId, result.messages, result.messagePins)
-        )
+        return ResponseDto.success(result.toAdapterDto())
     }
+
+    // Application DTO → Adapter DTO 변환 확장 함수
+    private fun PinnedMessagesResponseDto.toAdapterDto() = PinnedMessagesResponse(
+        roomId = this.roomId,
+        pinnedMessages = this.pinnedMessages.map { it.toAdapterDto() }
+    )
+
+    private fun PinnedMessageItemDto.toAdapterDto() = PinnedMessageItem(
+        messageId = this.messageId,
+        content = this.content,
+        senderId = this.senderId,
+        pinnedBy = this.pinnedBy,
+        pinnedAt = this.pinnedAt,
+        createdAt = this.createdAt
+    )
 
 }

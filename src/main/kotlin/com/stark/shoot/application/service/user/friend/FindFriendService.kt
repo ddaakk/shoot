@@ -1,6 +1,7 @@
 package com.stark.shoot.application.service.user.friend
 
-import com.stark.shoot.adapter.`in`.rest.dto.social.friend.FriendResponse
+import com.stark.shoot.application.dto.friend.FriendResponseDto
+import com.stark.shoot.application.mapper.friend.FriendDtoMapper
 import com.stark.shoot.application.port.`in`.user.friend.FindFriendUseCase
 import com.stark.shoot.application.port.`in`.user.friend.command.GetFriendsCommand
 import com.stark.shoot.application.port.`in`.user.friend.command.GetIncomingFriendRequestsCommand
@@ -16,7 +17,8 @@ import com.stark.shoot.infrastructure.exception.web.ResourceNotFoundException
 class FindFriendService(
     private val userQueryPort: UserQueryPort,
     private val friendshipQueryPort: FriendshipQueryPort,
-    private val friendRequestQueryPort: FriendRequestQueryPort
+    private val friendRequestQueryPort: FriendRequestQueryPort,
+    private val friendDtoMapper: FriendDtoMapper
 ) : FindFriendUseCase {
 
     /**
@@ -24,11 +26,11 @@ class FindFriendService(
      * N+1 쿼리 문제를 해결하기 위해 배치 조회를 사용합니다.
      *
      * @param command 친구 목록 조회 커맨드
-     * @return 친구 정보를 담은 FriendResponse 목록
+     * @return 친구 정보를 담은 FriendResponseDto 목록
      */
     override fun getFriends(
         command: GetFriendsCommand
-    ): List<FriendResponse> {
+    ): List<FriendResponseDto> {
         val currentUserId = command.currentUserId
 
         // 사용자 존재 여부 확인
@@ -52,13 +54,7 @@ class FindFriendService(
         // 친구 정보 응답 생성
         return friendships.mapNotNull { friendship ->
             val friend = friendsMap[friendship.friendId] ?: return@mapNotNull null
-
-            FriendResponse(
-                id = friend.id?.value ?: 0L,
-                username = friend.username.value,
-                nickname = friend.nickname.value,
-                profileImageUrl = friend.profileImageUrl?.value
-            )
+            friendDtoMapper.toDto(friend)
         }
     }
 
@@ -67,11 +63,11 @@ class FindFriendService(
      * N+1 쿼리 문제를 해결하기 위해 배치 조회를 사용합니다.
      *
      * @param command 받은 친구 요청 목록 조회 커맨드
-     * @return 받은 친구 요청 정보를 담은 FriendResponse 목록
+     * @return 받은 친구 요청 정보를 담은 FriendResponseDto 목록
      */
     override fun getIncomingFriendRequests(
         command: GetIncomingFriendRequestsCommand
-    ): List<FriendResponse> {
+    ): List<FriendResponseDto> {
         val currentUserId = command.currentUserId
 
         // 사용자 존재 여부 확인
@@ -98,13 +94,7 @@ class FindFriendService(
         // 요청자 정보 응답 생성
         return incomingRequests.mapNotNull { request ->
             val requester = requestersMap[request.senderId] ?: return@mapNotNull null
-
-            FriendResponse(
-                id = requester.id?.value ?: 0L,
-                username = requester.username.value,
-                nickname = requester.nickname.value,
-                profileImageUrl = requester.profileImageUrl?.value
-            )
+            friendDtoMapper.toDto(requester)
         }
     }
 
@@ -113,11 +103,11 @@ class FindFriendService(
      * N+1 쿼리 문제를 해결하기 위해 배치 조회를 사용합니다.
      *
      * @param command 보낸 친구 요청 목록 조회 커맨드
-     * @return 보낸 친구 요청 정보를 담은 FriendResponse 목록
+     * @return 보낸 친구 요청 정보를 담은 FriendResponseDto 목록
      */
     override fun getOutgoingFriendRequests(
         command: GetOutgoingFriendRequestsCommand
-    ): List<FriendResponse> {
+    ): List<FriendResponseDto> {
         val currentUserId = command.currentUserId
 
         // 사용자 존재 여부 확인
@@ -144,13 +134,7 @@ class FindFriendService(
         // 대상자 정보 응답 생성
         return outgoingRequests.mapNotNull { request ->
             val target = targetsMap[request.receiverId] ?: return@mapNotNull null
-
-            FriendResponse(
-                id = target.id?.value ?: 0L,
-                username = target.username.value,
-                nickname = target.nickname.value,
-                profileImageUrl = target.profileImageUrl?.value
-            )
+            friendDtoMapper.toDto(target)
         }
     }
 

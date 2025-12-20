@@ -1,6 +1,7 @@
 package com.stark.shoot.application.service.user.friend.recommend
 
-import com.stark.shoot.adapter.`in`.rest.dto.social.friend.FriendResponse
+import com.stark.shoot.application.dto.friend.FriendResponseDto
+import com.stark.shoot.application.mapper.friend.FriendDtoMapper
 import com.stark.shoot.application.port.`in`.user.friend.RecommendFriendsUseCase
 import com.stark.shoot.application.port.`in`.user.friend.command.GetRecommendedFriendsCommand
 import com.stark.shoot.application.port.out.user.UserQueryPort
@@ -21,7 +22,8 @@ import java.util.concurrent.ConcurrentHashMap
 class RecommendFriendService(
     private val recommendFriendPort: RecommendFriendPort,
     private val userQueryPort: UserQueryPort,
-    private val cacheManager: FriendRecommendationCacheManager
+    private val cacheManager: FriendRecommendationCacheManager,
+    private val friendDtoMapper: FriendDtoMapper
 ) : RecommendFriendsUseCase {
 
     private val logger = KotlinLogging.logger {}
@@ -39,7 +41,7 @@ class RecommendFriendService(
      */
     override fun getRecommendedFriends(
         command: GetRecommendedFriendsCommand
-    ): List<FriendResponse> {
+    ): List<FriendResponseDto> {
         val userId = command.userId
         val skip = command.skip
         val limit = command.limit
@@ -84,7 +86,7 @@ class RecommendFriendService(
     /**
      * 폴백 추천 목록 반환 (중복 계산 방지 시)
      */
-    private fun getFallbackRecommendations(userId: UserId, skip: Int, limit: Int): List<FriendResponse> {
+    private fun getFallbackRecommendations(userId: UserId, skip: Int, limit: Int): List<FriendResponseDto> {
         val randomRecommendations = recommendFriendPort.recommendFriends(UserId.from(1), limit * 2)
         val filteredRandomUsers = filterExistingRelationships(userId, randomRecommendations)
         return paginateAndConvert(filteredRandomUsers, skip, limit)
@@ -133,18 +135,11 @@ class RecommendFriendService(
         users: List<User>,
         skip: Int,
         limit: Int
-    ): List<FriendResponse> {
+    ): List<FriendResponseDto> {
         return users
             .drop(skip)
             .take(limit)
-            .map { user ->
-                FriendResponse(
-                    id = user.id?.value ?: 0L,
-                    username = user.username.value,
-                    nickname = user.nickname.value,
-                    profileImageUrl = user.profileImageUrl?.value ?: "",
-                )
-            }
+            .map { user -> friendDtoMapper.toDto(user) }
     }
 
     /**

@@ -1,14 +1,16 @@
 package com.stark.shoot.application.service.notification
 
+import com.stark.shoot.application.dto.notification.NotificationResponseDto
+import com.stark.shoot.application.mapper.notification.NotificationDtoMapper
 import com.stark.shoot.application.port.`in`.notification.NotificationQueryUseCase
 import com.stark.shoot.application.port.`in`.notification.command.*
 import com.stark.shoot.application.port.out.notification.NotificationQueryPort
-import com.stark.shoot.domain.notification.Notification
 import org.springframework.stereotype.Service
 
 @Service
 class NotificationQueryService(
-    private val notificationQueryPort: NotificationQueryPort
+    private val notificationQueryPort: NotificationQueryPort,
+    private val notificationDtoMapper: NotificationDtoMapper
 ) : NotificationQueryUseCase {
 
     /**
@@ -18,8 +20,9 @@ class NotificationQueryService(
      * @param command 알림 조회 커맨드
      * @return 알림 목록
      */
-    override fun getNotificationsForUser(command: GetNotificationsCommand): List<Notification> {
-        return notificationQueryPort.loadNotificationsForUser(command.userId, command.limit, command.offset)
+    override fun getNotificationsForUser(command: GetNotificationsCommand): List<NotificationResponseDto> {
+        val notifications = notificationQueryPort.loadNotificationsForUser(command.userId, command.limit, command.offset)
+        return notificationDtoMapper.toDtoList(notifications)
     }
 
     /**
@@ -29,8 +32,9 @@ class NotificationQueryService(
      * @param command 읽지 않은 알림 조회 커맨드
      * @return 읽지 않은 알림 목록
      */
-    override fun getUnreadNotificationsForUser(command: GetUnreadNotificationsCommand): List<Notification> {
-        return notificationQueryPort.loadUnreadNotificationsForUser(command.userId, command.limit, command.offset)
+    override fun getUnreadNotificationsForUser(command: GetUnreadNotificationsCommand): List<NotificationResponseDto> {
+        val notifications = notificationQueryPort.loadUnreadNotificationsForUser(command.userId, command.limit, command.offset)
+        return notificationDtoMapper.toDtoList(notifications)
     }
 
     /**
@@ -40,8 +44,9 @@ class NotificationQueryService(
      * @param command 알림 타입별 조회 커맨드
      * @return 알림 목록
      */
-    override fun getNotificationsByType(command: GetNotificationsByTypeCommand): List<Notification> {
-        return notificationQueryPort.loadNotificationsByType(command.userId, command.type, command.limit, command.offset)
+    override fun getNotificationsByType(command: GetNotificationsByTypeCommand): List<NotificationResponseDto> {
+        val notifications = notificationQueryPort.loadNotificationsByType(command.userId, command.type, command.limit, command.offset)
+        return notificationDtoMapper.toDtoList(notifications)
     }
 
     /**
@@ -51,14 +56,15 @@ class NotificationQueryService(
      * @param command 알림 소스별 조회 커맨드
      * @return 알림 목록
      */
-    override fun getNotificationsBySource(command: GetNotificationsBySourceCommand): List<Notification> {
-        return notificationQueryPort.loadNotificationsBySource(
+    override fun getNotificationsBySource(command: GetNotificationsBySourceCommand): List<NotificationResponseDto> {
+        val notifications = notificationQueryPort.loadNotificationsBySource(
             command.userId,
             command.sourceType,
             command.sourceId,
             command.limit,
             command.offset
         )
+        return notificationDtoMapper.toDtoList(notifications)
     }
 
     /**

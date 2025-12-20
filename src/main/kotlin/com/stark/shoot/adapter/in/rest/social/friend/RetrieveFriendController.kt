@@ -1,6 +1,7 @@
 package com.stark.shoot.adapter.`in`.rest.social.friend
 
 import com.stark.shoot.adapter.`in`.rest.dto.ResponseDto
+import com.stark.shoot.application.dto.friend.FriendResponseDto
 import com.stark.shoot.adapter.`in`.rest.dto.social.friend.FriendResponse
 import com.stark.shoot.application.port.`in`.user.friend.FindFriendUseCase
 import com.stark.shoot.application.port.`in`.user.friend.command.GetFriendsCommand
@@ -30,7 +31,7 @@ class RetrieveFriendController(
     ): ResponseDto<List<FriendResponse>> {
         val command = GetFriendsCommand.of(userId)
         val friends = findFriendUseCase.getFriends(command)
-        return ResponseDto.success(friends)
+        return ResponseDto.success(friends.map { it.toAdapterDto() })
     }
 
     @Operation(
@@ -43,7 +44,7 @@ class RetrieveFriendController(
     ): ResponseDto<List<FriendResponse>> {
         val command = GetIncomingFriendRequestsCommand.of(userId)
         val incomingRequests = findFriendUseCase.getIncomingFriendRequests(command)
-        return ResponseDto.success(incomingRequests)
+        return ResponseDto.success(incomingRequests.map { it.toAdapterDto() })
     }
 
     @Operation(
@@ -56,7 +57,15 @@ class RetrieveFriendController(
     ): ResponseDto<List<FriendResponse>> {
         val command = GetOutgoingFriendRequestsCommand.of(userId)
         val outgoingRequests = findFriendUseCase.getOutgoingFriendRequests(command)
-        return ResponseDto.success(outgoingRequests)
+        return ResponseDto.success(outgoingRequests.map { it.toAdapterDto() })
     }
+
+    // Application DTO → Adapter DTO 변환 확장 함수
+    private fun FriendResponseDto.toAdapterDto() = FriendResponse(
+        id = this.id,
+        username = this.username,
+        nickname = this.nickname,
+        profileImageUrl = this.profileImageUrl
+    )
 
 }

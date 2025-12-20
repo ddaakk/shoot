@@ -1,5 +1,7 @@
 package com.stark.shoot.application.service.message.pin
 
+import com.stark.shoot.application.dto.message.pin.PinResponseDto
+import com.stark.shoot.application.mapper.message.pin.MessagePinDtoMapper
 import com.stark.shoot.application.port.out.socket.SendWebSocketMessagePort
 import com.stark.shoot.application.port.`in`.message.pin.MessagePinUseCase
 import com.stark.shoot.application.port.`in`.message.pin.command.PinMessageCommand
@@ -32,7 +34,8 @@ class MessagePinService(
     private val sendWebSocketMessagePort: SendWebSocketMessagePort,
     private val eventPublisher: EventPublishPort,
     private val messagePinDomainService: MessagePinDomainService,
-    private val chatRoomConstants: ChatRoomConstants
+    private val chatRoomConstants: ChatRoomConstants,
+    private val messagePinDtoMapper: MessagePinDtoMapper
 ) : MessagePinUseCase {
 
     /**
@@ -40,10 +43,10 @@ class MessagePinService(
      * 최대 개수를 초과하면 예외를 발생시킵니다.
      *
      * @param command 메시지 고정 커맨드
-     * @return 고정된 메시지와 MessagePin Aggregate
+     * @return 고정된 메시지 응답 DTO
      * @throws IllegalStateException 최대 고정 개수를 초과하는 경우
      */
-    override fun pinMessage(command: PinMessageCommand): MessagePinResult {
+    override fun pinMessage(command: PinMessageCommand): PinResponseDto {
         val maxPinnedMessages = chatRoomConstants.maxPinnedMessages
 
         // 메시지 조회
@@ -63,7 +66,7 @@ class MessagePinService(
         val existingPin = messagePinQueryPort.findByMessageId(command.messageId)
         if (existingPin != null) {
             // 이미 고정된 메시지이므로 그대로 반환
-            return MessagePinResult(message, existingPin)
+            return messagePinDtoMapper.toPinResponseDto(MessagePinResult(message, existingPin))
         }
 
         // 채팅방에 이미 고정된 메시지 개수 확인
@@ -90,16 +93,16 @@ class MessagePinService(
         // 이벤트 발행
         publishPinEvent(message, command.userId, true)
 
-        return MessagePinResult(message, messagePin)
+        return messagePinDtoMapper.toPinResponseDto(MessagePinResult(message, messagePin))
     }
 
     /**
      * 메시지 고정을 해제합니다.
      *
      * @param command 메시지 고정 해제 커맨드
-     * @return 고정 해제된 메시지 (messagePin은 null)
+     * @return 고정 해제된 메시지 응답 DTO
      */
-    override fun unpinMessage(command: UnpinMessageCommand): MessagePinResult {
+    override fun unpinMessage(command: UnpinMessageCommand): PinResponseDto {
         val message = messageQueryPort.findById(command.messageId)
             .orThrowNotFound("메시지", command.messageId)
 
@@ -117,7 +120,7 @@ class MessagePinService(
 
         // 고정되지 않은 메시지인지 확인
         if (messagePin == null) {
-            return MessagePinResult(message, null)
+            return messagePinDtoMapper.toPinResponseDto(MessagePinResult(message, null))
         }
 
         // MessagePin Aggregate 삭제
@@ -129,7 +132,7 @@ class MessagePinService(
         // 이벤트 발행
         publishPinEvent(message, command.userId, false)
 
-        return MessagePinResult(message, null)
+        return messagePinDtoMapper.toPinResponseDto(MessagePinResult(message, null))
     }
 
 

@@ -1,6 +1,7 @@
 package com.stark.shoot.adapter.`in`.rest.notification
 
 import com.stark.shoot.adapter.`in`.rest.dto.ResponseDto
+import com.stark.shoot.application.dto.notification.NotificationResponseDto
 import com.stark.shoot.adapter.`in`.rest.dto.notification.NotificationResponse
 import com.stark.shoot.application.port.`in`.notification.NotificationManagementUseCase
 import com.stark.shoot.application.port.`in`.notification.command.MarkAllNotificationsAsReadCommand
@@ -43,9 +44,8 @@ class NotificationReadController(
         )
         val notification = notificationManagementUseCase.markAsRead(command)
 
-        return ResponseDto.success(NotificationResponse.from(notification), "알림이 읽음 처리되었습니다.")
+        return ResponseDto.success(notification.toAdapterDto(), "알림이 읽음 처리되었습니다.")
     }
-
 
     @Operation(
         summary = "모든 알림 읽음 처리",
@@ -62,7 +62,6 @@ class NotificationReadController(
         val count = notificationManagementUseCase.markAllAsRead(command)
         return ResponseDto.success(count, "모든 알림이 읽음 처리되었습니다.")
     }
-
 
     @Operation(
         summary = "모든 알림 타입별 읽음 처리",
@@ -85,7 +84,6 @@ class NotificationReadController(
         val count = notificationManagementUseCase.markAllAsReadByType(command)
         return ResponseDto.success(count, "타입별 알림이 읽음 처리되었습니다.")
     }
-
 
     @Operation(
         summary = "모든 알림 소스별 읽음 처리",
@@ -110,5 +108,20 @@ class NotificationReadController(
         val count = notificationManagementUseCase.markAllAsReadBySource(command)
         return ResponseDto.success(count, "소스별 알림이 읽음 처리되었습니다.")
     }
+
+    // Application DTO → Adapter DTO 변환 확장 함수
+    private fun NotificationResponseDto.toAdapterDto() = NotificationResponse(
+        id = this.id,
+        userId = this.userId,
+        title = this.title,
+        message = this.message,
+        type = this.type,
+        sourceId = this.sourceId,
+        sourceType = this.sourceType,
+        isRead = this.isRead,
+        createdAt = this.createdAt,
+        readAt = this.readAt,
+        metadata = this.metadata
+    )
 
 }

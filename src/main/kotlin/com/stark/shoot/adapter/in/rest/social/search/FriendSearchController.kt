@@ -1,6 +1,7 @@
 package com.stark.shoot.adapter.`in`.rest.social.search
 
 import com.stark.shoot.adapter.`in`.rest.dto.ResponseDto
+import com.stark.shoot.application.dto.friend.FriendResponseDto
 import com.stark.shoot.adapter.`in`.rest.dto.social.friend.FriendResponse
 import com.stark.shoot.application.port.`in`.user.friend.FriendSearchUseCase
 import com.stark.shoot.application.port.`in`.user.friend.command.SearchFriendsCommand
@@ -29,7 +30,15 @@ class FriendSearchController(
     ): ResponseDto<List<FriendResponse>> {
         val command = SearchFriendsCommand.of(userId, query)
         val friends = friendSearchUseCase.searchPotentialFriends(command)
-        return ResponseDto.success(friends)
+        return ResponseDto.success(friends.map { it.toAdapterDto() })
     }
+
+    // Application DTO → Adapter DTO 변환 확장 함수
+    private fun FriendResponseDto.toAdapterDto() = FriendResponse(
+        id = this.id,
+        username = this.username,
+        nickname = this.nickname,
+        profileImageUrl = this.profileImageUrl
+    )
 
 }

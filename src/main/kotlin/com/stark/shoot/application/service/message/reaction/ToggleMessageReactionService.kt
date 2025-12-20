@@ -1,6 +1,7 @@
 package com.stark.shoot.application.service.message.reaction
 
-import com.stark.shoot.adapter.`in`.rest.dto.message.reaction.ReactionResponse
+import com.stark.shoot.application.dto.message.reaction.ReactionResponseDto
+import com.stark.shoot.application.mapper.message.reaction.MessageReactionDtoMapper
 import com.stark.shoot.application.port.out.socket.SendWebSocketMessagePort
 import com.stark.shoot.application.port.`in`.message.reaction.ToggleMessageReactionUseCase
 import com.stark.shoot.application.port.`in`.message.reaction.command.ToggleMessageReactionCommand
@@ -36,7 +37,8 @@ class ToggleMessageReactionService(
     private val messageReactionCommandPort: MessageReactionCommandPort,
     private val sendWebSocketMessagePort: SendWebSocketMessagePort,
     private val eventPublisher: EventPublishPort,
-    private val redisLockManager: RedisLockManager
+    private val redisLockManager: RedisLockManager,
+    private val messageReactionDtoMapper: MessageReactionDtoMapper
 ) : ToggleMessageReactionUseCase {
 
     private val logger = KotlinLogging.logger {}
@@ -51,7 +53,7 @@ class ToggleMessageReactionService(
      * @param command 메시지 리액션 토글 커맨드
      * @return 업데이트된 메시지의 리액션 정보
      */
-    override fun toggleReaction(command: ToggleMessageReactionCommand): ReactionResponse {
+    override fun toggleReaction(command: ToggleMessageReactionCommand): ReactionResponseDto {
         try {
             // 리액션 타입 검증
             val type = ReactionType.fromCode(command.reactionType)
@@ -141,13 +143,13 @@ class ToggleMessageReactionService(
                 )
 
                 // 응답 생성
-                val reactionResponse = ReactionResponse.from(
+                val reactionResponse = messageReactionDtoMapper.toReactionResponseDto(
                     messageId = command.messageId.value,
                     reactions = updatedReactions,
                     updatedAt = java.time.Instant.now().toString()
                 )
 
-                sendSuccessResponse(command.userId, "반응이 업데이트되었습니다.", reactionResponse)
+                sendSuccessResponse(command.userId, "반응이 업데이트되었습니다.")
 
                 // 이벤트 발행
                 publishReactionEvents(
@@ -168,10 +170,10 @@ class ToggleMessageReactionService(
         }
     }
 
-    private fun sendSuccessResponse(userId: UserId, message: String, data: ReactionResponse) {
+    private fun sendSuccessResponse(userId: UserId, message: String) {
         sendWebSocketMessagePort.sendMessage(
             "/queue/message/reaction/response/${userId.value}",
-            WebSocketResponseBuilder.success(data, message)
+            WebSocketResponseBuilder.success(null, message)
         )
     }
 

@@ -1,6 +1,7 @@
 package com.stark.shoot.application.service.user.friend
 
-import com.stark.shoot.adapter.`in`.rest.dto.social.friend.FriendResponse
+import com.stark.shoot.application.dto.friend.FriendResponseDto
+import com.stark.shoot.application.mapper.friend.FriendDtoMapper
 import com.stark.shoot.application.port.`in`.user.friend.FriendSearchUseCase
 import com.stark.shoot.application.port.`in`.user.friend.command.SearchFriendsCommand
 import com.stark.shoot.application.port.out.user.UserQueryPort
@@ -15,7 +16,8 @@ import com.stark.shoot.infrastructure.exception.web.ResourceNotFoundException
 class FriendSearchService(
     private val userQueryPort: UserQueryPort,
     private val friendshipQueryPort: FriendshipQueryPort,
-    private val friendRequestQueryPort: FriendRequestQueryPort
+    private val friendRequestQueryPort: FriendRequestQueryPort,
+    private val friendDtoMapper: FriendDtoMapper
 ) : FriendSearchUseCase {
 
     /**
@@ -24,7 +26,7 @@ class FriendSearchService(
      * @param command 친구 검색 커맨드
      * @return 친구 목록
      */
-    override fun searchPotentialFriends(command: SearchFriendsCommand): List<FriendResponse> {
+    override fun searchPotentialFriends(command: SearchFriendsCommand): List<FriendResponseDto> {
         val userId = command.userId
         val query = command.query
 
@@ -64,14 +66,7 @@ class FriendSearchService(
         val searchedUsers = userQueryPort.searchUsers(query, excludedIds)
 
         // 응답 DTO로 변환
-        return searchedUsers.map { user ->
-            FriendResponse(
-                id = user.id?.value ?: 0L,
-                username = user.username.value,
-                nickname = user.nickname.value,
-                profileImageUrl = user.profileImageUrl?.value
-            )
-        }
+        return friendDtoMapper.toDtoList(searchedUsers)
     }
 
 }

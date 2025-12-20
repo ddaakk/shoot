@@ -1,6 +1,7 @@
 package com.stark.shoot.adapter.`in`.rest.notification
 
 import com.stark.shoot.adapter.`in`.rest.dto.ResponseDto
+import com.stark.shoot.application.dto.notification.NotificationResponseDto
 import com.stark.shoot.adapter.`in`.rest.dto.notification.NotificationResponse
 import com.stark.shoot.application.port.`in`.notification.NotificationQueryUseCase
 import com.stark.shoot.application.port.`in`.notification.command.*
@@ -41,7 +42,7 @@ class NotificationQueryController(
             offset = offset
         )
         val notifications = notificationQueryUseCase.getNotificationsForUser(command)
-        return ResponseDto.success(NotificationResponse.from(notifications), "알림이 성공적으로 조회되었습니다.")
+        return ResponseDto.success(notifications.map { it.toAdapterDto() }, "알림이 성공적으로 조회되었습니다.")
     }
 
 
@@ -66,7 +67,7 @@ class NotificationQueryController(
             offset = offset
         )
         val notifications = notificationQueryUseCase.getUnreadNotificationsForUser(command)
-        return ResponseDto.success(NotificationResponse.from(notifications), "읽지 않은 알림이 성공적으로 조회되었습니다.")
+        return ResponseDto.success(notifications.map { it.toAdapterDto() }, "읽지 않은 알림이 성공적으로 조회되었습니다.")
     }
 
 
@@ -111,7 +112,7 @@ class NotificationQueryController(
             offset = offset
         )
         val notifications = notificationQueryUseCase.getNotificationsByType(command)
-        return ResponseDto.success(NotificationResponse.from(notifications), "타입별 알림이 성공적으로 조회되었습니다.")
+        return ResponseDto.success(notifications.map { it.toAdapterDto() }, "타입별 알림이 성공적으로 조회되었습니다.")
     }
 
 
@@ -141,7 +142,22 @@ class NotificationQueryController(
             offset = offset
         )
         val notifications = notificationQueryUseCase.getNotificationsBySource(command)
-        return ResponseDto.success(NotificationResponse.from(notifications), "소스별 알림이 성공적으로 조회되었습니다.")
+        return ResponseDto.success(notifications.map { it.toAdapterDto() }, "소스별 알림이 성공적으로 조회되었습니다.")
     }
+
+    // Application DTO → Adapter DTO 변환 확장 함수
+    private fun NotificationResponseDto.toAdapterDto() = NotificationResponse(
+        id = this.id,
+        userId = this.userId,
+        title = this.title,
+        message = this.message,
+        type = this.type,
+        sourceId = this.sourceId,
+        sourceType = this.sourceType,
+        isRead = this.isRead,
+        createdAt = this.createdAt,
+        readAt = this.readAt,
+        metadata = this.metadata
+    )
 
 }
