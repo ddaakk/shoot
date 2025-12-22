@@ -26,17 +26,45 @@
 - **Rich Domain Model**: Business logic encapsulated in domain objects
 - **Anti-Corruption Layer (ACL)**: Context 간 변환 처리
 
+### DTO Layer Separation
+**완료 날짜**: 2025-12-22
+
+Application 레이어와 Adapter 레이어 간 명확한 DTO 분리로 Hexagonal Architecture 원칙 준수:
+
+**분리된 도메인 (8개)**:
+- ✅ **User**: 사용자 인증 및 정보 조회
+- ✅ **ChatRoom**: 채팅방 생성, 조회, 즐겨찾기
+- ✅ **ScheduledMessage**: 예약 메시지
+- ✅ **Friend**: 친구 조회, 검색, 추천
+- ✅ **MessagePin**: 메시지 고정
+- ✅ **MessageReaction**: 메시지 리액션
+- ✅ **Notification**: 알림 조회 및 읽음 처리
+- ✅ **FriendGroup**: 친구 그룹 관리
+
+**계층별 책임**:
+- **Application DTO** (`application/dto/`): Application 레이어 내부 데이터 전달
+- **Application Mapper** (`application/mapper/`): Domain Entity → Application DTO 변환
+- **Adapter DTO** (`adapter/in/rest/dto/`): REST API 응답 형식
+- **Controller**: Application DTO → Adapter DTO 변환 (확장 함수 사용)
+
+**아키텍처 개선**:
+- UseCase 인터페이스가 Domain Entity 대신 Application DTO 반환
+- Adapter 레이어가 Application 레이어에 의존하지 않도록 분리
+- 계층 간 의존성 역전 원칙(DIP) 완벽 준수
+
 ## Project Structure
 
 ```
 src/main/kotlin/com/shoot/
 ├── domain/              # 핵심 비즈니스 로직, 엔티티
 ├── application/         # Use cases, 서비스 레이어
+│   ├── dto/            # Application 레이어 DTO
+│   ├── mapper/         # Domain → Application DTO 변환
 │   ├── port/in/        # Inbound ports (use cases)
 │   ├── port/out/       # Outbound ports (persistence, messaging)
 │   └── service/        # 애플리케이션 서비스, 이벤트 리스너
 ├── adapter/
-│   ├── in/             # Controllers, WebSocket handlers
+│   ├── in/             # Controllers, WebSocket handlers, Adapter DTO
 │   └── out/            # DB adapters, messaging adapters
 └── infrastructure/      # Config, 공통 기능
 ```
@@ -56,13 +84,16 @@ src/main/kotlin/com/shoot/
 - 비즈니스 규칙/로직
 
 ### application/
-- Use cases (port/in)
-- Port interfaces (port/out)
-- 애플리케이션 서비스
+- **dto/**: Application 레이어 DTO (도메인 → 외부 전달용)
+- **mapper/**: Domain Entity → Application DTO 변환 컴포넌트
+- **port/in/**: Use cases (반드시 Application DTO 반환)
+- **port/out/**: Port interfaces (persistence, messaging)
+- **service/**: 애플리케이션 서비스
 - 이벤트 리스너 (`@TransactionalEventListener`)
 
 ### adapter/
-- **in/**: REST Controllers, WebSocket handlers, DTO
+- **in/**: REST Controllers, WebSocket handlers, Adapter DTO
+  - Controller에서 Application DTO → Adapter DTO 변환 (확장 함수 사용)
 - **out/**: JPA/MongoDB repositories, Kafka producers, Redis clients
 
 ### infrastructure/
@@ -198,6 +229,9 @@ src/main/kotlin/com/shoot/
 - **Aggregate Root에 `@AggregateRoot` 어노테이션 명시**
 - **Value Object에 `@ValueObject` 어노테이션 명시**
 - **ID Reference Pattern 사용** (다른 Aggregate는 ID로만 참조)
+- **UseCase는 반드시 Application DTO 반환** (Domain Entity 직접 반환 금지)
+- **Mapper를 통해 Domain → Application DTO 변환**
+- **Controller는 확장 함수로 Application DTO → Adapter DTO 변환**
 - 단일 표현식 함수 사용
 - `in` 연산자 사용 (`.contains()` 대신)
 - 불필요한 `this` 제거
@@ -211,6 +245,8 @@ src/main/kotlin/com/shoot/
 - Controller에서 직접 repository 호출 금지
 - **Aggregate 간 직접 객체 참조 금지** (ID만 사용)
 - **하나의 트랜잭션에서 여러 Aggregate 수정 금지**
+- **UseCase에서 Domain Entity 직접 반환 금지** (Application DTO 사용)
+- **Application 레이어에서 Adapter DTO 참조 금지**
 - 중복 주석 작성 금지
 - 매직넘버 하드코딩 금지 (DomainConstants 사용)
 
@@ -279,4 +315,4 @@ src/main/kotlin/com/shoot/
 
 ---
 
-*Last updated: 2025-11-09*
+*Last updated: 2025-12-22*
