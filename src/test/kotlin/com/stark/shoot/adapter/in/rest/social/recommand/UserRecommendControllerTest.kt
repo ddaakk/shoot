@@ -1,13 +1,12 @@
 package com.stark.shoot.adapter.`in`.rest.social.recommand
 
-import com.stark.shoot.adapter.`in`.rest.dto.social.friend.FriendResponse
+import com.stark.shoot.application.dto.friend.FriendResponseDto
 import com.stark.shoot.application.port.`in`.user.friend.RecommendFriendsUseCase
 import com.stark.shoot.application.port.`in`.user.friend.command.GetRecommendedFriendsCommand
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito.*
-import org.hamcrest.Matchers.hasSize
 
 @DisplayName("UserRecommendController 단위 테스트")
 class UserRecommendControllerTest {
@@ -25,9 +24,9 @@ class UserRecommendControllerTest {
         val skip = 0
 
         val recommendations = listOf(
-            createFriendResponse(2L, "friend1", "친구1", "http://example.com/profile1.jpg"),
-            createFriendResponse(3L, "friend2", "친구2", "http://example.com/profile2.jpg"),
-            createFriendResponse(4L, "friend3", "친구3", null)
+            createFriendResponseDto(2L, "friend1", "친구1", "http://example.com/profile1.jpg"),
+            createFriendResponseDto(3L, "friend2", "친구2", "http://example.com/profile2.jpg"),
+            createFriendResponseDto(4L, "friend3", "친구3", null)
         )
 
         val command = GetRecommendedFriendsCommand.of(userId, skip, limit)
@@ -40,7 +39,6 @@ class UserRecommendControllerTest {
         assertThat(response).isNotNull
         assertThat(response.success).isTrue()
         assertThat(response.data).hasSize(3)
-        assertThat(response.data).isEqualTo(recommendations)
 
         // 첫 번째 추천 친구 검증
         assertThat(response.data?.get(0)?.id).isEqualTo(2L)
@@ -74,14 +72,14 @@ class UserRecommendControllerTest {
         verify(recommendFriendsUseCase).getRecommendedFriends(command)
     }
 
-    // 테스트용 FriendResponse 객체 생성 헬퍼 메서드
-    private fun createFriendResponse(
+    // 테스트용 FriendResponseDto 객체 생성 헬퍼 메서드
+    private fun createFriendResponseDto(
         id: Long,
         username: String,
         nickname: String,
         profileImageUrl: String?
-    ): FriendResponse {
-        return FriendResponse(
+    ): FriendResponseDto {
+        return FriendResponseDto(
             id = id,
             username = username,
             nickname = nickname,

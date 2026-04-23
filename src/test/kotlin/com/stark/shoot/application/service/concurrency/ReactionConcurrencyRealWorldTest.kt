@@ -32,6 +32,7 @@ import kotlin.random.Random
  */
 @DataMongoTest
 @Import(MessageReactionMapper::class, MessageReactionPersistenceAdapter::class)
+@Tag("mongo")
 @DisplayName("실제 채팅 서비스 리액션 동시성 테스트")
 class ReactionConcurrencyRealWorldTest {
 

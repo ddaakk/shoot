@@ -15,6 +15,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito.*
+import org.springframework.data.mongodb.core.MongoTemplate
 import java.time.Instant
 import org.hamcrest.Matchers.hasSize
 
@@ -23,7 +24,8 @@ class MessageCommandMongoAdapterTest {
 
     private val chatMessageRepository = mock(ChatMessageMongoRepository::class.java)
     private val chatMessageMapper = mock(ChatMessageMapper::class.java)
-    private val adapter = MessageCommandMongoAdapter(chatMessageRepository, chatMessageMapper)
+    private val mongoTemplate = mock(MongoTemplate::class.java)
+    private val adapter = MessageCommandMongoAdapter(chatMessageRepository, chatMessageMapper, mongoTemplate)
 
     private fun createChatMessage(id: String = "test-message-id"): ChatMessage {
         return ChatMessage(
