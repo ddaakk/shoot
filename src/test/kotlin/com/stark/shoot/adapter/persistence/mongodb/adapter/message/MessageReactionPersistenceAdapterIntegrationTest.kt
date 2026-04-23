@@ -26,6 +26,7 @@ import java.time.Instant
  */
 @DataMongoTest
 @Import(MessageReactionMapper::class, MessageReactionPersistenceAdapter::class)
+@Tag("mongo")
 @DisplayName("MessageReaction MongoDB 통합 테스트")
 class MessageReactionPersistenceAdapterIntegrationTest {
 

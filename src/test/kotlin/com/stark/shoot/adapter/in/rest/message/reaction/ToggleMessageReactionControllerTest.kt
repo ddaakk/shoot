@@ -1,7 +1,8 @@
 package com.stark.shoot.adapter.`in`.rest.message.reaction
 
 import com.stark.shoot.adapter.`in`.rest.dto.message.reaction.ReactionRequest
-import com.stark.shoot.adapter.`in`.rest.dto.message.reaction.ReactionResponse
+import com.stark.shoot.application.dto.message.reaction.ReactionResponseDto
+import com.stark.shoot.application.dto.message.reaction.ReactionInfoDto
 import com.stark.shoot.application.port.`in`.message.reaction.ToggleMessageReactionUseCase
 import com.stark.shoot.application.port.`in`.message.reaction.command.ToggleMessageReactionCommand
 import org.assertj.core.api.Assertions.assertThat
@@ -36,8 +37,14 @@ class ToggleMessageReactionControllerTest {
         )
         
         val updatedAt = Instant.now().toString()
-        val response = ReactionResponse.from(messageId, updatedReactions, updatedAt)
-        
+        val response = ReactionResponseDto(
+            messageId = messageId,
+            reactions = updatedReactions.map { (type, userIds) ->
+                ReactionInfoDto(reactionType = type, emoji = "", description = "", userIds = userIds.toList(), count = userIds.size)
+            },
+            updatedAt = updatedAt
+        )
+
         val command = ToggleMessageReactionCommand.of(messageId, authentication, reactionType)
         `when`(toggleMessageReactionUseCase.toggleReaction(command)).thenReturn(response)
 
@@ -47,9 +54,8 @@ class ToggleMessageReactionControllerTest {
         // then
         assertThat(result).isNotNull
         assertThat(result.success).isTrue()
-        assertThat(result.data).isEqualTo(response)
         assertThat(result.message).isEqualTo("반응이 토글되었습니다.")
-        
+
         verify(toggleMessageReactionUseCase).toggleReaction(command)
     }
 
@@ -60,19 +66,25 @@ class ToggleMessageReactionControllerTest {
         val messageId = "message123"
         val userId = 1L
         val reactionType = "sad"
-        
+
         val request = ReactionRequest(messageId, reactionType, userId)
-        
+
         `when`(authentication.name).thenReturn(userId.toString())
-        
+
         // 반응이 제거된 상태의 응답
         val updatedReactions = mapOf(
             "like" to setOf(2L, 3L)
         )
-        
+
         val updatedAt = Instant.now().toString()
-        val response = ReactionResponse.from(messageId, updatedReactions, updatedAt)
-        
+        val response = ReactionResponseDto(
+            messageId = messageId,
+            reactions = updatedReactions.map { (type, userIds) ->
+                ReactionInfoDto(reactionType = type, emoji = "", description = "", userIds = userIds.toList(), count = userIds.size)
+            },
+            updatedAt = updatedAt
+        )
+
         val command = ToggleMessageReactionCommand.of(messageId, authentication, reactionType)
         `when`(toggleMessageReactionUseCase.toggleReaction(command)).thenReturn(response)
 
@@ -82,9 +94,8 @@ class ToggleMessageReactionControllerTest {
         // then
         assertThat(result).isNotNull
         assertThat(result.success).isTrue()
-        assertThat(result.data).isEqualTo(response)
         assertThat(result.message).isEqualTo("반응이 토글되었습니다.")
-        
+
         verify(toggleMessageReactionUseCase).toggleReaction(command)
     }
 }

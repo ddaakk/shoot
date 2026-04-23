@@ -1,8 +1,8 @@
 package com.stark.shoot.adapter.`in`.rest.user
 
 import com.stark.shoot.adapter.`in`.rest.dto.user.login.LoginRequest
-import com.stark.shoot.adapter.`in`.rest.dto.user.login.LoginResponse
-import com.stark.shoot.adapter.`in`.rest.dto.user.UserResponse
+import com.stark.shoot.application.dto.user.LoginResponseDto
+import com.stark.shoot.application.dto.user.UserResponseDto
 import com.stark.shoot.application.port.`in`.user.auth.UserAuthUseCase
 import com.stark.shoot.application.port.`in`.user.auth.UserLoginUseCase
 import com.stark.shoot.application.port.`in`.user.auth.command.LoginCommand
@@ -29,13 +29,13 @@ class AuthControllerTest {
         // given
         val request = LoginRequest("testuser", "Password123!")
         val command = LoginCommand.of("testuser", "Password123!")
-        val loginResponse = LoginResponse(
+        val loginResponseDto = LoginResponseDto(
             userId = "1",
             accessToken = "jwt.token.here",
             refreshToken = "refresh.token.here"
         )
 
-        `when`(userLoginUseCase.login(command)).thenReturn(loginResponse)
+        `when`(userLoginUseCase.login(command)).thenReturn(loginResponseDto)
 
         // when
         val response = controller.login(request)
@@ -43,7 +43,6 @@ class AuthControllerTest {
         // then
         assertThat(response).isNotNull
         assertThat(response.success).isTrue()
-        assertThat(response.data).isEqualTo(loginResponse)
         assertThat(response.data?.accessToken).isEqualTo("jwt.token.here")
         assertThat(response.data?.refreshToken).isEqualTo("refresh.token.here")
         assertThat(response.data?.userId).isEqualTo("1")
@@ -56,7 +55,7 @@ class AuthControllerTest {
     @DisplayName("[happy] 현재 사용자 정보를 조회한다")
     fun `현재 사용자 정보를 조회한다`() {
         // given
-        val userResponse = UserResponse(
+        val userResponseDto = UserResponseDto(
             id = "1",
             username = "testuser",
             nickname = "테스트 유저",
@@ -70,7 +69,7 @@ class AuthControllerTest {
 
         val command = RetrieveUserDetailsCommand.of(authentication)
 
-        `when`(userAuthUseCase.retrieveUserDetails(command)).thenReturn(userResponse)
+        `when`(userAuthUseCase.retrieveUserDetails(command)).thenReturn(userResponseDto)
 
         // when
         val response = controller.getCurrentUser(authentication)
@@ -78,7 +77,6 @@ class AuthControllerTest {
         // then
         assertThat(response).isNotNull
         assertThat(response.success).isTrue()
-        assertThat(response.data).isEqualTo(userResponse)
         assertThat(response.data?.id).isEqualTo("1")
         assertThat(response.data?.username).isEqualTo("testuser")
         assertThat(response.data?.nickname).isEqualTo("테스트 유저")

@@ -8,6 +8,7 @@ import com.stark.shoot.adapter.`in`.socket.mapper.MessageSyncMapper
 import com.stark.shoot.application.port.`in`.message.command.GetPaginationMessageCommand
 import com.stark.shoot.application.port.`in`.message.command.SendSyncMessagesToUserCommand
 import com.stark.shoot.application.port.out.message.MessageQueryPort
+import com.stark.shoot.application.port.out.message.reaction.MessageReactionQueryPort
 import com.stark.shoot.application.port.out.message.thread.ThreadQueryPort
 import com.stark.shoot.domain.chat.message.ChatMessage
 import com.stark.shoot.domain.chat.message.type.MessageStatus
@@ -37,12 +38,14 @@ class PaginationMessageSyncServiceTest {
 
     private val messageQueryPort = mock(MessageQueryPort::class.java)
     private val threadQueryPort = mock(ThreadQueryPort::class.java)
+    private val messageReactionQueryPort = mock(MessageReactionQueryPort::class.java)
     private val messagingTemplate = mock(SimpMessagingTemplate::class.java)
     private val messageSyncMapper = mock(MessageSyncMapper::class.java)
 
     private val paginationMessageSyncService = PaginationMessageSyncService(
         messageQueryPort,
         threadQueryPort,
+        messageReactionQueryPort,
         messagingTemplate,
         messageSyncMapper
     )
@@ -88,6 +91,10 @@ class PaginationMessageSyncServiceTest {
 
             // For initial load without lastMessageId, the service fetches latest messages
             `when`(messageQueryPort.findByRoomIdFlow(ChatRoomIdService.from(roomId), 50)).thenReturn(messageFlow)
+
+            // Mock the messageReactionQueryPort batch call
+            val messageIds = messages.mapNotNull { it.id }
+            `when`(messageReactionQueryPort.getReactionsWithUsersBatch(messageIds)).thenReturn(emptyMap())
 
             // Mock the threadQueryPort for each message
             for (message in messages) {
@@ -155,6 +162,10 @@ class PaginationMessageSyncServiceTest {
             }
 
             `when`(messageQueryPort.findByRoomIdAndBeforeIdFlow(ChatRoomIdService.from(roomId), messageId, 30)).thenReturn(messageFlow)
+
+            // Mock the messageReactionQueryPort batch call
+            val messageIds = messages.mapNotNull { it.id }
+            `when`(messageReactionQueryPort.getReactionsWithUsersBatch(messageIds)).thenReturn(emptyMap())
 
             // Mock the threadQueryPort for each message
             for (message in messages) {

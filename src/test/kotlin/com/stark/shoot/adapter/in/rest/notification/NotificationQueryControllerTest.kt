@@ -1,22 +1,17 @@
 package com.stark.shoot.adapter.`in`.rest.notification
 
+import com.stark.shoot.application.dto.notification.NotificationResponseDto
 import com.stark.shoot.application.port.`in`.notification.NotificationQueryUseCase
 import com.stark.shoot.application.port.`in`.notification.command.*
-import com.stark.shoot.domain.notification.Notification
 import com.stark.shoot.domain.notification.type.NotificationType
 import com.stark.shoot.domain.notification.type.SourceType
-import com.stark.shoot.domain.notification.vo.NotificationId
-import com.stark.shoot.domain.notification.vo.NotificationMessage
-import com.stark.shoot.domain.notification.vo.NotificationTitle
 import com.stark.shoot.domain.shared.UserId
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito.*
-import org.springframework.http.HttpStatus
 import org.springframework.security.core.Authentication
 import java.time.Instant
-import org.hamcrest.Matchers.hasSize
 
 @DisplayName("NotificationQueryController 단위 테스트")
 class NotificationQueryControllerTest {
@@ -34,7 +29,7 @@ class NotificationQueryControllerTest {
         val offset = 0
 
         val notifications = listOf(
-            createNotification(
+            createNotificationDto(
                 id = "notification1",
                 userId = userId,
                 title = "첫 번째 알림",
@@ -42,7 +37,7 @@ class NotificationQueryControllerTest {
                 type = NotificationType.NEW_MESSAGE,
                 sourceType = SourceType.CHAT
             ),
-            createNotification(
+            createNotificationDto(
                 id = "notification2",
                 userId = userId,
                 title = "두 번째 알림",
@@ -57,7 +52,7 @@ class NotificationQueryControllerTest {
             limit = limit,
             offset = offset
         )
-        
+
         `when`(authentication.name).thenReturn(userId.toString())
         `when`(notificationQueryUseCase.getNotificationsForUser(command)).thenReturn(notifications)
 
@@ -92,7 +87,7 @@ class NotificationQueryControllerTest {
         val offset = 0
 
         val notifications = listOf(
-            createNotification(
+            createNotificationDto(
                 id = "notification1",
                 userId = userId,
                 title = "읽지 않은 알림 1",
@@ -101,7 +96,7 @@ class NotificationQueryControllerTest {
                 sourceType = SourceType.CHAT,
                 isRead = false
             ),
-            createNotification(
+            createNotificationDto(
                 id = "notification2",
                 userId = userId,
                 title = "읽지 않은 알림 2",
@@ -117,7 +112,7 @@ class NotificationQueryControllerTest {
             limit = limit,
             offset = offset
         )
-        
+
         `when`(authentication.name).thenReturn(userId.toString())
         `when`(notificationQueryUseCase.getUnreadNotificationsForUser(command)).thenReturn(notifications)
 
@@ -178,7 +173,7 @@ class NotificationQueryControllerTest {
         val offset = 0
 
         val notifications = listOf(
-            createNotification(
+            createNotificationDto(
                 id = "notification1",
                 userId = userId,
                 title = "친구 요청 알림 1",
@@ -186,7 +181,7 @@ class NotificationQueryControllerTest {
                 type = NotificationType.FRIEND_REQUEST,
                 sourceType = SourceType.FRIEND
             ),
-            createNotification(
+            createNotificationDto(
                 id = "notification2",
                 userId = userId,
                 title = "친구 요청 알림 2",
@@ -202,7 +197,7 @@ class NotificationQueryControllerTest {
             limit = limit,
             offset = offset
         )
-        
+
         `when`(authentication.name).thenReturn(userId.toString())
         `when`(notificationQueryUseCase.getNotificationsByType(command)).thenReturn(notifications)
 
@@ -236,7 +231,7 @@ class NotificationQueryControllerTest {
         val offset = 0
 
         val notifications = listOf(
-            createNotification(
+            createNotificationDto(
                 id = "notification1",
                 userId = userId,
                 title = "채팅 알림 1",
@@ -245,7 +240,7 @@ class NotificationQueryControllerTest {
                 sourceType = SourceType.CHAT,
                 sourceId = sourceId
             ),
-            createNotification(
+            createNotificationDto(
                 id = "notification2",
                 userId = userId,
                 title = "채팅 알림 2",
@@ -263,7 +258,7 @@ class NotificationQueryControllerTest {
             limit = limit,
             offset = offset
         )
-        
+
         `when`(authentication.name).thenReturn(userId.toString())
         `when`(notificationQueryUseCase.getNotificationsBySource(command)).thenReturn(notifications)
 
@@ -289,8 +284,8 @@ class NotificationQueryControllerTest {
         )
     }
 
-    // 테스트용 Notification 객체 생성 헬퍼 메서드
-    private fun createNotification(
+    // 테스트용 NotificationResponseDto 객체 생성 헬퍼 메서드
+    private fun createNotificationDto(
         id: String,
         userId: Long,
         title: String,
@@ -301,16 +296,17 @@ class NotificationQueryControllerTest {
         isRead: Boolean = false,
         readAt: Instant? = null,
         metadata: Map<String, Any> = emptyMap()
-    ): Notification {
-        return Notification(
-            id = NotificationId.from(id),
-            userId = UserId.from(userId),
-            title = NotificationTitle.from(title),
-            message = NotificationMessage.from(message),
-            type = type,
+    ): NotificationResponseDto {
+        return NotificationResponseDto(
+            id = id,
+            userId = userId,
+            title = title,
+            message = message,
+            type = type.name,
             sourceId = sourceId,
-            sourceType = sourceType,
+            sourceType = sourceType.name,
             isRead = isRead,
+            createdAt = Instant.now(),
             readAt = readAt,
             metadata = metadata
         )

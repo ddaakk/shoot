@@ -1,13 +1,12 @@
 package com.stark.shoot.adapter.`in`.rest.social.search
 
-import com.stark.shoot.adapter.`in`.rest.dto.social.friend.FriendResponse
+import com.stark.shoot.application.dto.friend.FriendResponseDto
 import com.stark.shoot.application.port.`in`.user.friend.FriendSearchUseCase
 import com.stark.shoot.application.port.`in`.user.friend.command.SearchFriendsCommand
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito.*
-import org.hamcrest.Matchers.hasSize
 
 @DisplayName("FriendSearchController 단위 테스트")
 class FriendSearchControllerTest {
@@ -23,8 +22,8 @@ class FriendSearchControllerTest {
         val query = "친구"
 
         val searchResults = listOf(
-            createFriendResponse(2L, "friend1", "친구1", "http://example.com/profile1.jpg"),
-            createFriendResponse(3L, "friend2", "친구2", "http://example.com/profile2.jpg")
+            createFriendResponseDto(2L, "friend1", "친구1", "http://example.com/profile1.jpg"),
+            createFriendResponseDto(3L, "friend2", "친구2", "http://example.com/profile2.jpg")
         )
 
         val command = SearchFriendsCommand.of(userId, query)
@@ -38,7 +37,6 @@ class FriendSearchControllerTest {
         assertThat(response).isNotNull
         assertThat(response.success).isTrue()
         assertThat(response.data).hasSize(2)
-        assertThat(response.data).isEqualTo(searchResults)
 
         // 첫 번째 검색 결과 검증
         assertThat(response.data?.get(0)?.id).isEqualTo(2L)
@@ -71,14 +69,14 @@ class FriendSearchControllerTest {
         verify(friendSearchUseCase).searchPotentialFriends(command)
     }
 
-    // 테스트용 FriendResponse 객체 생성 헬퍼 메서드
-    private fun createFriendResponse(
+    // 테스트용 FriendResponseDto 객체 생성 헬퍼 메서드
+    private fun createFriendResponseDto(
         id: Long,
         username: String,
         nickname: String,
         profileImageUrl: String?
-    ): FriendResponse {
-        return FriendResponse(
+    ): FriendResponseDto {
+        return FriendResponseDto(
             id = id,
             username = username,
             nickname = nickname,

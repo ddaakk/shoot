@@ -101,6 +101,24 @@ allOpen {
     annotation("jakarta.persistence.Embeddable")
 }
 
-tasks.withType<Test> {
+tasks.withType<Test>().configureEach {
     useJUnitPlatform()
+}
+
+tasks.named<Test>("test") {
+    useJUnitPlatform {
+        excludeTags("mongo")
+    }
+}
+
+tasks.register<Test>("mongoTest") {
+    description = "Runs MongoDB-backed integration tests."
+    group = "verification"
+    testClassesDirs = sourceSets["test"].output.classesDirs
+    classpath = sourceSets["test"].runtimeClasspath
+    shouldRunAfter(tasks.named("test"))
+
+    useJUnitPlatform {
+        includeTags("mongo")
+    }
 }

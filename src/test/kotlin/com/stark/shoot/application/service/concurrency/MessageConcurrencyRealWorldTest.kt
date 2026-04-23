@@ -34,6 +34,7 @@ import com.stark.shoot.domain.chatroom.vo.ChatRoomId as ChatRoomQueryId
  */
 @DataMongoTest
 @Import(ChatMessageMapper::class, MessageCommandMongoAdapter::class, MessageQueryMongoAdapter::class)
+@Tag("mongo")
 @DisplayName("실제 채팅 서비스 메시지 동시성 테스트")
 class MessageConcurrencyRealWorldTest {
 

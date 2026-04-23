@@ -1,7 +1,7 @@
 package com.stark.shoot.adapter.`in`.rest.message
 
-import com.stark.shoot.adapter.`in`.rest.dto.message.MessageContentResponseDto
-import com.stark.shoot.adapter.`in`.rest.dto.message.MessageResponseDto
+import com.stark.shoot.application.dto.message.response.MessageContentResponseDto
+import com.stark.shoot.application.dto.message.response.MessageResponseDto
 import com.stark.shoot.application.port.`in`.message.GetMessagesUseCase
 import com.stark.shoot.application.port.`in`.message.command.GetMessagesCommand
 import com.stark.shoot.domain.chat.message.type.MessageStatus
@@ -12,7 +12,6 @@ import org.junit.jupiter.api.Test
 import org.mockito.Mockito.doReturn
 import org.mockito.Mockito.mock
 import java.time.Instant
-import org.hamcrest.Matchers.hasSize
 
 @DisplayName("MessageReadController 단위 테스트")
 class MessageReadControllerTest {

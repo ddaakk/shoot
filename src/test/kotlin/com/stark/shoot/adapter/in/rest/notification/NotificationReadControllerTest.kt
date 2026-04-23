@@ -1,22 +1,19 @@
 package com.stark.shoot.adapter.`in`.rest.notification
 
+import com.stark.shoot.application.dto.notification.NotificationResponseDto
 import com.stark.shoot.application.port.`in`.notification.NotificationManagementUseCase
 import com.stark.shoot.application.port.`in`.notification.command.MarkAllNotificationsAsReadCommand
 import com.stark.shoot.application.port.`in`.notification.command.MarkAllNotificationsBySourceAsReadCommand
 import com.stark.shoot.application.port.`in`.notification.command.MarkAllNotificationsByTypeAsReadCommand
 import com.stark.shoot.application.port.`in`.notification.command.MarkNotificationAsReadCommand
-import com.stark.shoot.domain.notification.Notification
 import com.stark.shoot.domain.notification.type.NotificationType
 import com.stark.shoot.domain.notification.type.SourceType
 import com.stark.shoot.domain.notification.vo.NotificationId
-import com.stark.shoot.domain.notification.vo.NotificationMessage
-import com.stark.shoot.domain.notification.vo.NotificationTitle
 import com.stark.shoot.domain.shared.UserId
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito.*
-import org.springframework.http.HttpStatus
 import org.springframework.security.core.Authentication
 import java.time.Instant
 
@@ -34,25 +31,28 @@ class NotificationReadControllerTest {
         val notificationId = "notification123"
         val userId = 1L
         val now = Instant.now()
-        
+
         val command = MarkNotificationAsReadCommand(
             notificationId = NotificationId.from(notificationId),
             userId = UserId.from(userId)
         )
-        
-        val readNotification = createNotification(
+
+        val readNotificationDto = NotificationResponseDto(
             id = notificationId,
             userId = userId,
             title = "읽은 알림",
             message = "읽은 알림 내용",
-            type = NotificationType.NEW_MESSAGE,
-            sourceType = SourceType.CHAT,
+            type = NotificationType.NEW_MESSAGE.name,
+            sourceId = "source123",
+            sourceType = SourceType.CHAT.name,
             isRead = true,
-            readAt = now
+            createdAt = Instant.now(),
+            readAt = now,
+            metadata = emptyMap()
         )
-        
+
         `when`(authentication.name).thenReturn(userId.toString())
-        `when`(notificationManagementUseCase.markAsRead(command)).thenReturn(readNotification)
+        `when`(notificationManagementUseCase.markAsRead(command)).thenReturn(readNotificationDto)
 
         // when
         val response = controller.markAsRead(authentication, notificationId)
@@ -76,7 +76,7 @@ class NotificationReadControllerTest {
         val command = MarkAllNotificationsAsReadCommand(
             userId = UserId.from(userId)
         )
-        
+
         `when`(authentication.name).thenReturn(userId.toString())
         `when`(notificationManagementUseCase.markAllAsRead(command)).thenReturn(markedCount)
 
@@ -102,7 +102,7 @@ class NotificationReadControllerTest {
             userId = UserId.from(userId),
             type = NotificationType.valueOf(type)
         )
-        
+
         `when`(authentication.name).thenReturn(userId.toString())
         `when`(notificationManagementUseCase.markAllAsReadByType(command)).thenReturn(markedCount)
 
@@ -130,7 +130,7 @@ class NotificationReadControllerTest {
             sourceType = SourceType.valueOf(sourceType),
             sourceId = sourceId
         )
-        
+
         `when`(authentication.name).thenReturn(userId.toString())
         `when`(notificationManagementUseCase.markAllAsReadBySource(command)).thenReturn(markedCount)
 
@@ -157,7 +157,7 @@ class NotificationReadControllerTest {
             sourceType = SourceType.valueOf(sourceType),
             sourceId = null
         )
-        
+
         `when`(authentication.name).thenReturn(userId.toString())
         `when`(notificationManagementUseCase.markAllAsReadBySource(command)).thenReturn(markedCount)
 
@@ -169,32 +169,5 @@ class NotificationReadControllerTest {
         assertThat(response.data).isEqualTo(markedCount)
 
         verify(notificationManagementUseCase).markAllAsReadBySource(command)
-    }
-
-    // 테스트용 Notification 객체 생성 헬퍼 메서드
-    private fun createNotification(
-        id: String,
-        userId: Long,
-        title: String,
-        message: String,
-        type: NotificationType,
-        sourceType: SourceType,
-        sourceId: String = "source123",
-        isRead: Boolean = false,
-        readAt: Instant? = null,
-        metadata: Map<String, Any> = emptyMap()
-    ): Notification {
-        return Notification(
-            id = NotificationId.from(id),
-            userId = UserId.from(userId),
-            title = NotificationTitle.from(title),
-            message = NotificationMessage.from(message),
-            type = type,
-            sourceId = sourceId,
-            sourceType = sourceType,
-            isRead = isRead,
-            readAt = readAt,
-            metadata = metadata
-        )
     }
 }
