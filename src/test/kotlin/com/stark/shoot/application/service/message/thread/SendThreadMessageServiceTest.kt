@@ -1,7 +1,7 @@
 package com.stark.shoot.application.service.message.thread
 
-import com.stark.shoot.adapter.`in`.rest.dto.message.ChatMessageRequest
-import com.stark.shoot.adapter.`in`.rest.dto.message.MessageContentRequest
+import com.stark.shoot.application.dto.message.MessageContentDto
+import com.stark.shoot.application.dto.message.SendMessageDto
 import com.stark.shoot.application.port.`in`.message.thread.command.SendThreadMessageCommand
 import com.stark.shoot.application.port.out.message.MessagePublisherPort
 import com.stark.shoot.application.port.out.message.MessageQueryPort
@@ -66,10 +66,11 @@ class SendThreadMessageServiceTest {
     @DisplayName("[bad] 존재하지 않는 스레드에 메시지를 보내면 예외가 발생한다")
     fun `존재하지 않는 스레드에 메시지를 보내면 예외가 발생한다`() {
         // given
-        val request = ChatMessageRequest(
+        val request = SendMessageDto(
+            tempId = null,
             roomId = 1L,
             senderId = 2L,
-            content = MessageContentRequest("hi", MessageType.TEXT),
+            content = MessageContentDto("hi", MessageType.TEXT),
             threadId = "5f9f1b9b9c9d1b9b9c9d1b9b"
         )
 
@@ -78,7 +79,7 @@ class SendThreadMessageServiceTest {
 
         // when & then
         assertThrows<ResourceNotFoundException> {
-            sendThreadMessageService.sendThreadMessage(SendThreadMessageCommand(request))
+            sendThreadMessageService.sendThreadMessage(SendThreadMessageCommand.of(request))
         }
 
         verify(messageQueryPort).findById(threadId)
@@ -90,10 +91,11 @@ class SendThreadMessageServiceTest {
     fun `스레드 메시지를 전송할 수 있다`() {
         // given
         val threadId = "5f9f1b9b9c9d1b9b9c9d1b9b"
-        val request = ChatMessageRequest(
+        val request = SendMessageDto(
+            tempId = null,
             roomId = 1L,
             senderId = 2L,
-            content = MessageContentRequest("hi", MessageType.TEXT),
+            content = MessageContentDto("hi", MessageType.TEXT),
             threadId = threadId
         )
 
@@ -131,7 +133,7 @@ class SendThreadMessageServiceTest {
         )
 
         // when
-        sendThreadMessageService.sendThreadMessage(SendThreadMessageCommand(request))
+        sendThreadMessageService.sendThreadMessage(SendThreadMessageCommand.of(request))
 
         // then
         verify(messageQueryPort).findById(messageId)

@@ -11,8 +11,13 @@ import java.time.Duration
 @DisplayName("RedisUtilService 테스트")
 class RedisUtilServiceTest {
 
+    @Suppress("UNCHECKED_CAST")
+    private fun mockValueOperations(): ValueOperations<String, String> {
+        return mock(ValueOperations::class.java) as ValueOperations<String, String>
+    }
+
     private val redisTemplate = mock(StringRedisTemplate::class.java)
-    private val valueOps = mock(ValueOperations::class.java) as ValueOperations<String, String>
+    private val valueOps = mockValueOperations()
     private val service = RedisUtilService(redisTemplate)
 
     @Test

@@ -1,8 +1,8 @@
 package com.stark.shoot.adapter.`in`.rest.user
 
 import com.stark.shoot.adapter.`in`.rest.dto.user.login.LoginRequest
-import com.stark.shoot.adapter.`in`.rest.dto.user.login.LoginResponse
-import com.stark.shoot.adapter.`in`.rest.dto.user.UserResponse
+import com.stark.shoot.application.dto.user.LoginResponseDto
+import com.stark.shoot.application.dto.user.UserResponseDto
 import com.stark.shoot.application.port.`in`.user.auth.UserAuthUseCase
 import com.stark.shoot.application.port.`in`.user.auth.UserLoginUseCase
 import com.stark.shoot.application.port.`in`.user.auth.command.LoginCommand
@@ -29,7 +29,7 @@ class AuthControllerTest {
         // given
         val request = LoginRequest("testuser", "Password123!")
         val command = LoginCommand.of("testuser", "Password123!")
-        val loginResponse = LoginResponse(
+        val loginResponse = LoginResponseDto(
             userId = "1",
             accessToken = "jwt.token.here",
             refreshToken = "refresh.token.here"
@@ -56,7 +56,7 @@ class AuthControllerTest {
     @DisplayName("[happy] 현재 사용자 정보를 조회한다")
     fun `현재 사용자 정보를 조회한다`() {
         // given
-        val userResponse = UserResponse(
+        val userResponse = UserResponseDto(
             id = "1",
             username = "testuser",
             nickname = "테스트 유저",

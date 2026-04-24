@@ -3,15 +3,11 @@ package com.stark.shoot.adapter.`in`.rest.social.group
 import com.stark.shoot.application.port.`in`.user.group.FindFriendGroupUseCase
 import com.stark.shoot.application.port.`in`.user.group.ManageFriendGroupUseCase
 import com.stark.shoot.application.port.`in`.user.group.command.*
-import com.stark.shoot.domain.social.FriendGroup
-import com.stark.shoot.domain.social.vo.FriendGroupId
-import com.stark.shoot.domain.social.vo.FriendGroupName
-import com.stark.shoot.domain.shared.UserId
+import com.stark.shoot.application.dto.group.FriendGroupResponseDto
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito.*
-import java.time.Instant
 import org.hamcrest.Matchers.hasSize
 import com.stark.shoot.adapter.`in`.rest.dto.social.group.CreateGroupRequest
 import com.stark.shoot.adapter.`in`.rest.dto.social.group.AddMemberInGroupRequest
@@ -255,21 +251,20 @@ class FriendGroupControllerTest {
         verify(findUseCase).getGroups(command)
     }
 
-    // 테스트용 FriendGroup 객체 생성 헬퍼 메서드
+    // 테스트용 FriendGroupResponseDto 객체 생성 헬퍼 메서드
     private fun createFriendGroup(
         id: Long,
         ownerId: Long,
         name: String,
         description: String?,
         memberIds: Set<Long> = emptySet()
-    ): FriendGroup {
-        return FriendGroup(
-            id = FriendGroupId.from(id),
-            ownerId = UserId.from(ownerId),
-            name = FriendGroupName.from(name),
+    ): FriendGroupResponseDto {
+        return FriendGroupResponseDto(
+            id = id,
+            ownerId = ownerId,
+            name = name,
             description = description,
-            memberIds = memberIds.map { UserId.from(it) }.toSet(),
-            createdAt = Instant.now()
+            memberIds = memberIds
         )
     }
 }

@@ -1,6 +1,6 @@
 package com.stark.shoot.adapter.`in`.rest.social.friend
 
-import com.stark.shoot.adapter.`in`.rest.dto.social.friend.FriendResponse
+import com.stark.shoot.application.dto.friend.FriendResponseDto
 import com.stark.shoot.application.port.`in`.user.friend.FindFriendUseCase
 import com.stark.shoot.application.port.`in`.user.friend.command.GetFriendsCommand
 import com.stark.shoot.application.port.`in`.user.friend.command.GetIncomingFriendRequestsCommand
@@ -119,14 +119,14 @@ class RetrieveFriendControllerTest {
         verify(findFriendUseCase).getFriends(command)
     }
 
-    // 테스트용 FriendResponse 객체 생성 헬퍼 메서드
+    // 테스트용 FriendResponseDto 객체 생성 헬퍼 메서드
     private fun createFriendResponse(
         id: Long,
         username: String,
         nickname: String,
         profileImageUrl: String?
-    ): FriendResponse {
-        return FriendResponse(
+    ): FriendResponseDto {
+        return FriendResponseDto(
             id = id,
             username = username,
             nickname = nickname,

@@ -1,6 +1,6 @@
 package com.stark.shoot.application.service.message.thread
 
-import com.stark.shoot.adapter.out.persistence.mongodb.mapper.ChatMessageMapper
+import com.stark.shoot.application.mapper.message.MessageDtoMapper
 import com.stark.shoot.application.port.`in`.message.thread.command.GetThreadDetailCommand
 import com.stark.shoot.application.port.out.message.MessageQueryPort
 import com.stark.shoot.application.port.out.message.thread.ThreadQueryPort
@@ -23,18 +23,18 @@ class GetThreadDetailServiceTest {
 
     private lateinit var messageQueryPort: MessageQueryPort
     private lateinit var threadQueryPort: ThreadQueryPort
-    private lateinit var chatMessageMapper: ChatMessageMapper
+    private lateinit var messageDtoMapper: MessageDtoMapper
     private lateinit var getThreadDetailService: GetThreadDetailService
 
     @BeforeEach
     fun setUp() {
         messageQueryPort = mock(MessageQueryPort::class.java)
         threadQueryPort = mock(ThreadQueryPort::class.java)
-        chatMessageMapper = ChatMessageMapper()
+        messageDtoMapper = MessageDtoMapper()
         getThreadDetailService = GetThreadDetailService(
             messageQueryPort,
             threadQueryPort,
-            chatMessageMapper
+            messageDtoMapper
         )
     }
 

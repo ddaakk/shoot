@@ -1,6 +1,6 @@
 package com.stark.shoot.application.service.message.thread
 
-import com.stark.shoot.adapter.out.persistence.mongodb.mapper.ChatMessageMapper
+import com.stark.shoot.application.mapper.message.MessageDtoMapper
 import com.stark.shoot.application.port.`in`.message.thread.command.GetThreadMessagesCommand
 import com.stark.shoot.application.port.out.message.thread.ThreadQueryPort
 import com.stark.shoot.domain.chat.message.ChatMessage
@@ -22,11 +22,11 @@ import org.hamcrest.Matchers.hasSize
 class GetThreadMessagesServiceTest {
 
     private val threadQueryPort = mock(ThreadQueryPort::class.java)
-    private val chatMessageMapper = ChatMessageMapper()
+    private val messageDtoMapper = MessageDtoMapper()
 
     private val getThreadMessagesService = GetThreadMessagesService(
         threadQueryPort,
-        chatMessageMapper
+        messageDtoMapper
     )
 
     @Nested
@@ -55,7 +55,7 @@ class GetThreadMessagesServiceTest {
 
             // then
             assertThat(result).hasSize(1)
-            assertThat(result[0].id).isEqualTo(message.id.toString())
+            assertThat(result[0].id).isEqualTo(message.id?.value)
 
             verify(threadQueryPort).findByThreadId(MessageId.from(threadId), 20)
         }

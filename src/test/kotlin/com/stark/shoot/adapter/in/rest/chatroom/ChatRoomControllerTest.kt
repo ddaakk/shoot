@@ -1,8 +1,8 @@
 package com.stark.shoot.adapter.`in`.rest.chatroom
 
-import com.stark.shoot.adapter.`in`.rest.dto.chatroom.ChatRoomResponse
 import com.stark.shoot.adapter.`in`.rest.dto.chatroom.CreateDirectChatRequest
 import com.stark.shoot.adapter.`in`.rest.dto.chatroom.TitleRequest
+import com.stark.shoot.application.dto.chatroom.ChatRoomResponseDto
 import com.stark.shoot.application.port.`in`.chatroom.CreateChatRoomUseCase
 import com.stark.shoot.application.port.`in`.chatroom.FindChatRoomUseCase
 import com.stark.shoot.application.port.`in`.chatroom.ManageChatRoomUseCase
@@ -117,16 +117,16 @@ class ChatRoomControllerTest {
         verify(manageChatRoomUseCase).updateTitle(UpdateTitleCommand.of(roomId, newTitle))
     }
 
-    // 테스트용 ChatRoomResponse 객체 생성 헬퍼 메서드
+    // 테스트용 ChatRoomResponseDto 객체 생성 헬퍼 메서드
     private fun createChatRoomResponse(
         roomId: Long,
         title: String,
         isPinned: Boolean
-    ): ChatRoomResponse {
+    ): ChatRoomResponseDto {
         val formatter = DateTimeFormatter.ofPattern("a h:mm")
         val timestamp = Instant.now().atZone(ZoneId.systemDefault()).let { formatter.format(it) }
 
-        return ChatRoomResponse(
+        return ChatRoomResponseDto(
             roomId = roomId,
             title = title,
             lastMessage = "마지막 메시지",

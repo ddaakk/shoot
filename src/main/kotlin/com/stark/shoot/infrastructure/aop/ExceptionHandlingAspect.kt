@@ -34,7 +34,11 @@ class ExceptionHandlingAspect {
 
             // 로깅 - 중요한 예외만 ERROR 레벨로 로깅
             when (e) {
-                is ResourceNotFoundException, is InvalidInputException ->
+                is ResourceNotFoundException,
+                is InvalidInputException,
+                is UserNotInRoomException,
+                is ScheduledMessageNotOwnedException,
+                is ScheduledMessageAlreadyProcessedException ->
                     logger.info { "Expected exception in ${joinPoint.signature.declaringTypeName}.${joinPoint.signature.name}: ${e.message}" }
 
                 else ->
@@ -55,6 +59,12 @@ class ExceptionHandlingAspect {
                     ApiException(e.message ?: "리소스를 찾을 수 없습니다", ErrorCode.RESOURCE_NOT_FOUND, e)
                 is InvalidInputException ->
                     ApiException(e.message ?: "유효하지 않은 입력", ErrorCode.INVALID_INPUT, e)
+                is UserNotInRoomException ->
+                    ApiException(e.message ?: "사용자가 채팅방에 속해있지 않습니다", ErrorCode.USER_NOT_IN_ROOM, e)
+                is ScheduledMessageNotOwnedException ->
+                    ApiException(e.message ?: "예약된 메시지를 소유하고 있지 않습니다", ErrorCode.SCHEDULED_MESSAGE_NOT_OWNED, e)
+                is ScheduledMessageAlreadyProcessedException ->
+                    ApiException(e.message ?: "이미 처리된 예약 메시지입니다", ErrorCode.SCHEDULED_MESSAGE_ALREADY_PROCESSED, e)
                 is UnauthorizedException ->
                     ApiException(e.message ?: "인증이 필요합니다", ErrorCode.UNAUTHORIZED, e)
                 is JwtAuthenticationException ->

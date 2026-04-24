@@ -1,6 +1,6 @@
 package com.stark.shoot.adapter.`in`.rest.chatroom
 
-import com.stark.shoot.adapter.`in`.rest.dto.chatroom.ChatRoomResponse
+import com.stark.shoot.application.dto.chatroom.ChatRoomResponseDto
 import com.stark.shoot.application.port.`in`.chatroom.FindChatRoomUseCase
 import com.stark.shoot.application.port.`in`.chatroom.command.GetChatRoomsCommand
 import org.assertj.core.api.Assertions.assertThat
@@ -97,7 +97,7 @@ class ChatRoomListControllerTest {
         verify(findChatRoomUseCase).getChatRoomsForUser(GetChatRoomsCommand.of(userId))
     }
 
-    // 테스트용 ChatRoomResponse 객체 생성 헬퍼 메서드
+    // 테스트용 ChatRoomResponseDto 객체 생성 헬퍼 메서드
     private fun createChatRoomResponse(
         roomId: Long,
         title: String,
@@ -106,8 +106,8 @@ class ChatRoomListControllerTest {
         isPinned: Boolean,
         timestamp: String = Instant.now().atZone(ZoneId.systemDefault())
             .format(DateTimeFormatter.ofPattern("a h:mm"))
-    ): ChatRoomResponse {
-        return ChatRoomResponse(
+    ): ChatRoomResponseDto {
+        return ChatRoomResponseDto(
             roomId = roomId,
             title = title,
             lastMessage = lastMessage,

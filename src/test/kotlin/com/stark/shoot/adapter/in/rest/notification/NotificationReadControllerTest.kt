@@ -1,16 +1,14 @@
 package com.stark.shoot.adapter.`in`.rest.notification
 
+import com.stark.shoot.application.dto.notification.NotificationResponseDto
 import com.stark.shoot.application.port.`in`.notification.NotificationManagementUseCase
 import com.stark.shoot.application.port.`in`.notification.command.MarkAllNotificationsAsReadCommand
 import com.stark.shoot.application.port.`in`.notification.command.MarkAllNotificationsBySourceAsReadCommand
 import com.stark.shoot.application.port.`in`.notification.command.MarkAllNotificationsByTypeAsReadCommand
 import com.stark.shoot.application.port.`in`.notification.command.MarkNotificationAsReadCommand
-import com.stark.shoot.domain.notification.Notification
 import com.stark.shoot.domain.notification.type.NotificationType
 import com.stark.shoot.domain.notification.type.SourceType
 import com.stark.shoot.domain.notification.vo.NotificationId
-import com.stark.shoot.domain.notification.vo.NotificationMessage
-import com.stark.shoot.domain.notification.vo.NotificationTitle
 import com.stark.shoot.domain.shared.UserId
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.DisplayName
@@ -171,7 +169,7 @@ class NotificationReadControllerTest {
         verify(notificationManagementUseCase).markAllAsReadBySource(command)
     }
 
-    // 테스트용 Notification 객체 생성 헬퍼 메서드
+    // 테스트용 NotificationResponseDto 객체 생성 헬퍼 메서드
     private fun createNotification(
         id: String,
         userId: Long,
@@ -183,16 +181,17 @@ class NotificationReadControllerTest {
         isRead: Boolean = false,
         readAt: Instant? = null,
         metadata: Map<String, Any> = emptyMap()
-    ): Notification {
-        return Notification(
-            id = NotificationId.from(id),
-            userId = UserId.from(userId),
-            title = NotificationTitle.from(title),
-            message = NotificationMessage.from(message),
-            type = type,
+    ): NotificationResponseDto {
+        return NotificationResponseDto(
+            id = id,
+            userId = userId,
+            title = title,
+            message = message,
+            type = type.name,
             sourceId = sourceId,
-            sourceType = sourceType,
+            sourceType = sourceType.name,
             isRead = isRead,
+            createdAt = Instant.now(),
             readAt = readAt,
             metadata = metadata
         )

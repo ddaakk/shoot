@@ -1,6 +1,6 @@
 package com.stark.shoot.adapter.`in`.rest.user
 
-import com.stark.shoot.adapter.`in`.rest.dto.user.login.LoginResponse
+import com.stark.shoot.application.dto.user.LoginResponseDto
 import com.stark.shoot.application.port.`in`.user.token.RefreshTokenUseCase
 import com.stark.shoot.application.port.`in`.user.token.command.RefreshTokenCommand
 import org.assertj.core.api.Assertions.assertThat
@@ -20,7 +20,7 @@ class TokenControllerTest {
         // given
         val refreshTokenHeader = "Bearer refresh.token.here"
         val command = RefreshTokenCommand.of(refreshTokenHeader)
-        val loginResponse = LoginResponse(
+        val loginResponse = LoginResponseDto(
             userId = "1",
             accessToken = "new.access.token",
             refreshToken = "refresh.token.here"

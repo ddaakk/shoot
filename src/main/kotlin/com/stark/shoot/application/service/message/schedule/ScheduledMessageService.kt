@@ -2,7 +2,9 @@ package com.stark.shoot.application.service.message.schedule
 
 import com.stark.shoot.infrastructure.exception.web.InvalidInputException
 import com.stark.shoot.infrastructure.exception.web.ResourceNotFoundException
-import com.stark.shoot.infrastructure.exception.web.UnauthorizedException
+import com.stark.shoot.infrastructure.exception.web.ScheduledMessageAlreadyProcessedException
+import com.stark.shoot.infrastructure.exception.web.ScheduledMessageNotOwnedException
+import com.stark.shoot.infrastructure.exception.web.UserNotInRoomException
 import com.stark.shoot.application.dto.message.schedule.ScheduledMessageResponseDto
 import com.stark.shoot.application.mapper.message.schedule.ScheduledMessageDtoMapper
 import com.stark.shoot.application.port.`in`.message.schedule.ScheduledMessageUseCase
@@ -48,7 +50,7 @@ class ScheduledMessageService(
 
         // 사용자가 채팅방에 속해있는지 확인
         if (!chatRoom.participants.contains(senderId)) {
-            throw UnauthorizedException("채팅방에 속해있지 않습니다: userId=$senderId, roomId=$roomId")
+            throw UserNotInRoomException("채팅방에 속해있지 않습니다: userId=$senderId, roomId=$roomId")
         }
 
         // 예약 시간 검증 (현재보다 미래인지)
@@ -82,12 +84,12 @@ class ScheduledMessageService(
 
         // 본인이 예약한 메시지인지 확인
         if (scheduledMessage.senderId != userId.value) {
-            throw UnauthorizedException("본인이 예약한 메시지만 취소할 수 있습니다: id=$scheduledMessageId, userId=${userId.value}")
+            throw ScheduledMessageNotOwnedException("본인이 예약한 메시지만 취소할 수 있습니다: id=$scheduledMessageId, userId=${userId.value}")
         }
 
         // 이미 처리된 메시지인지 확인
         if (scheduledMessage.status != ScheduledMessageStatus.PENDING) {
-            throw IllegalStateException(
+            throw ScheduledMessageAlreadyProcessedException(
                 "이미 ${scheduledMessage.status} 상태의 메시지입니다: id=$scheduledMessageId"
             )
         }
@@ -110,12 +112,12 @@ class ScheduledMessageService(
 
         // 본인 확인
         if (scheduledMessage.senderId != userId) {
-            throw UnauthorizedException("본인이 예약한 메시지만 수정할 수 있습니다: id=$scheduledMessageId, userId=$userId")
+            throw ScheduledMessageNotOwnedException("본인이 예약한 메시지만 수정할 수 있습니다: id=$scheduledMessageId, userId=$userId")
         }
 
         // 이미 처리된 메시지인지 확인
         if (scheduledMessage.status != ScheduledMessageStatus.PENDING) {
-            throw IllegalStateException(
+            throw ScheduledMessageAlreadyProcessedException(
                 "이미 ${scheduledMessage.status} 상태의 메시지입니다: id=$scheduledMessageId"
             )
         }
@@ -161,12 +163,12 @@ class ScheduledMessageService(
 
         // 본인이 예약한 메시지인지 확인
         if (scheduledMessage.senderId != userId) {
-            throw UnauthorizedException("본인이 예약한 메시지만 전송할 수 있습니다: id=$scheduledMessageId, userId=$userId")
+            throw ScheduledMessageNotOwnedException("본인이 예약한 메시지만 전송할 수 있습니다: id=$scheduledMessageId, userId=$userId")
         }
 
         // 이미 처리된 메시지인지 확인
         if (scheduledMessage.status != ScheduledMessageStatus.PENDING) {
-            throw IllegalStateException(
+            throw ScheduledMessageAlreadyProcessedException(
                 "이미 ${scheduledMessage.status} 상태의 메시지입니다: id=$scheduledMessageId"
             )
         }
