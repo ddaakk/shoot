@@ -1,0 +1,6 @@
+spring:
+  application:
+    name: shoot-notification-service
+
+server:
+  port: 8085

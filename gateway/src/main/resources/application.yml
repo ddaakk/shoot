@@ -1,0 +1,14 @@
+spring:
+  application:
+    name: shoot-gateway
+
+server:
+  port: 8080
+
+shoot:
+  services:
+    user: http://localhost:8081
+    social: http://localhost:8082
+    chatroom: http://localhost:8083
+    chat: http://localhost:8084
+    notification: http://localhost:8085
