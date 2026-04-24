@@ -18,8 +18,13 @@ import java.time.Instant
 @DisplayName("Redis URL 프리뷰 캐시 어댑터 테스트")
 class RedisUrlPreviewCacheAdapterTest {
 
+    @Suppress("UNCHECKED_CAST")
+    private fun mockValueOperations(): ValueOperations<String, String> {
+        return mock(ValueOperations::class.java) as ValueOperations<String, String>
+    }
+
     private val redisTemplate = mock(StringRedisTemplate::class.java)
-    private val valueOps = mock(ValueOperations::class.java) as ValueOperations<String, String>
+    private val valueOps = mockValueOperations()
     private val objectMapper = ObjectMapper().apply {
         registerModule(JavaTimeModule())
         registerModule(KotlinModule.Builder().build())

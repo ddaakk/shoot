@@ -16,8 +16,13 @@ import java.time.Duration
 @DisplayName("RedisLockManager 테스트")
 class RedisLockManagerTest {
 
+    @Suppress("UNCHECKED_CAST")
+    private fun mockValueOperations(): ValueOperations<String, String> {
+        return mock(ValueOperations::class.java) as ValueOperations<String, String>
+    }
+
     private val redisTemplate: StringRedisTemplate = mock(StringRedisTemplate::class.java)
-    private val valueOps: ValueOperations<String, String> = mock(ValueOperations::class.java) as ValueOperations<String, String>
+    private val valueOps: ValueOperations<String, String> = mockValueOperations()
     private lateinit var manager: RedisLockManager
 
     @BeforeEach

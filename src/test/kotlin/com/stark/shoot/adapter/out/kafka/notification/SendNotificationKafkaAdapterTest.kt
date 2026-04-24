@@ -22,7 +22,17 @@ import java.util.concurrent.CompletableFuture
 @DisplayName("Kafka 알림 전송 어댑터 테스트")
 class SendNotificationKafkaAdapterTest {
 
-    private val kafkaTemplate = mock(KafkaTemplate::class.java) as KafkaTemplate<String, String>
+    @Suppress("UNCHECKED_CAST")
+    private fun mockKafkaTemplate(): KafkaTemplate<String, String> {
+        return mock(KafkaTemplate::class.java) as KafkaTemplate<String, String>
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    private fun mockSendResult(): SendResult<String, String> {
+        return mock(SendResult::class.java) as SendResult<String, String>
+    }
+
+    private val kafkaTemplate = mockKafkaTemplate()
     private val objectMapper = mock(ObjectMapper::class.java)
     private val adapter = PublishNotificationKafkaAdapter(kafkaTemplate, objectMapper)
 
@@ -48,7 +58,7 @@ class SendNotificationKafkaAdapterTest {
 
         `when`(objectMapper.writeValueAsString(notification)).thenReturn(notificationJson)
 
-        val future = CompletableFuture.completedFuture(mock(SendResult::class.java) as SendResult<String, String>)
+        val future = CompletableFuture.completedFuture(mockSendResult())
         `when`(kafkaTemplate.send("user-notifications", notification.userId.value.toString(), notificationJson)).thenReturn(future)
 
         // when
@@ -106,7 +116,7 @@ class SendNotificationKafkaAdapterTest {
             val notificationJson = "{\"id\":\"test-notification-id\",\"type\":\"NEW_MESSAGE\"}"
             `when`(objectMapper.writeValueAsString(notification)).thenReturn(notificationJson)
 
-            val future = CompletableFuture.completedFuture(mock(SendResult::class.java) as SendResult<String, String>)
+            val future = CompletableFuture.completedFuture(mockSendResult())
             `when`(kafkaTemplate.send("user-notifications", notification.userId.value.toString(), notificationJson)).thenReturn(future)
         }
 

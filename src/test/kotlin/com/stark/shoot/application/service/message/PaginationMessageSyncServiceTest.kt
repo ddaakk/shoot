@@ -31,7 +31,6 @@ import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.*
 import org.springframework.messaging.simp.SimpMessagingTemplate
 import java.time.Instant
-import org.hamcrest.Matchers.hasSize
 
 @DisplayName("페이지네이션 메시지 동기화 서비스 테스트")
 class PaginationMessageSyncServiceTest {
@@ -75,6 +74,7 @@ class PaginationMessageSyncServiceTest {
             )
 
             val messageFlow: Flow<ChatMessage> = flowOf(*messages.toTypedArray())
+            val messageIds = messages.mapNotNull { it.id }
 
             val syncInfoDtos = messages.map { 
                 MessageSyncInfoDto(
@@ -91,9 +91,6 @@ class PaginationMessageSyncServiceTest {
 
             // For initial load without lastMessageId, the service fetches latest messages
             `when`(messageQueryPort.findByRoomIdFlow(ChatRoomIdService.from(roomId), 50)).thenReturn(messageFlow)
-
-            // Mock the messageReactionQueryPort batch call
-            val messageIds = messages.mapNotNull { it.id }
             `when`(messageReactionQueryPort.getReactionsWithUsersBatch(messageIds)).thenReturn(emptyMap())
 
             // Mock the threadQueryPort for each message
@@ -147,6 +144,7 @@ class PaginationMessageSyncServiceTest {
             )
 
             val messageFlow: Flow<ChatMessage> = flowOf(*messages.toTypedArray())
+            val messageIds = messages.mapNotNull { it.id }
 
             val syncInfoDtos = messages.map { 
                 MessageSyncInfoDto(
@@ -162,9 +160,6 @@ class PaginationMessageSyncServiceTest {
             }
 
             `when`(messageQueryPort.findByRoomIdAndBeforeIdFlow(ChatRoomIdService.from(roomId), messageId, 30)).thenReturn(messageFlow)
-
-            // Mock the messageReactionQueryPort batch call
-            val messageIds = messages.mapNotNull { it.id }
             `when`(messageReactionQueryPort.getReactionsWithUsersBatch(messageIds)).thenReturn(emptyMap())
 
             // Mock the threadQueryPort for each message

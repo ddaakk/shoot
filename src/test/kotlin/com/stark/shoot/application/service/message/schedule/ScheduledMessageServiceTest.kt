@@ -89,7 +89,7 @@ class ScheduledMessageServiceTest {
         doReturn(chatRoom).`when`(chatRoomQueryPort).findById(roomId)
 
         // when & then
-        val exception = assertThrows<com.stark.shoot.infrastructure.exception.web.UnauthorizedException> {
+        val exception = assertThrows<com.stark.shoot.infrastructure.exception.web.UserNotInRoomException> {
             sut.scheduleMessage(ScheduleMessageCommand(roomId, senderId, content, scheduledAt))
         }
 
@@ -308,6 +308,86 @@ class ScheduledMessageServiceTest {
         assertThat(savedMessage.id!!.value).isEqualTo(messageIdStr)
         assertThat(savedMessage.senderId).isEqualTo(userIdLong)
         assertThat(savedMessage.status).isEqualTo(ScheduledMessageStatus.CANCELED)
+    }
+
+    @Test
+    @DisplayName("[bad] 본인 소유가 아닌 예약 메시지는 취소할 수 없다")
+    fun `본인 소유가 아닌 예약 메시지는 취소할 수 없다`() {
+        class TestScheduledMessagePort : ScheduledMessagePort {
+            override fun saveScheduledMessage(scheduledMessage: ScheduledMessage): ScheduledMessage = scheduledMessage
+
+            override fun findById(id: org.bson.types.ObjectId): ScheduledMessage {
+                return ScheduledMessage(
+                    id = MessageId.from("507f1f77bcf86cd799439011"),
+                    roomId = 1L,
+                    senderId = 999L,
+                    content = MessageContent(
+                        text = "다른 사용자의 예약 메시지",
+                        type = MessageType.TEXT
+                    ),
+                    scheduledAt = Instant.now().plus(1, ChronoUnit.HOURS),
+                    status = ScheduledMessageStatus.PENDING
+                )
+            }
+
+            override fun findByUserId(userId: Long, roomId: Long?): List<ScheduledMessage> = emptyList()
+            override fun findPendingMessagesBeforeTime(time: Instant): List<ScheduledMessage> = emptyList()
+        }
+
+        val testService = ScheduledMessageService(
+            TestScheduledMessagePort(),
+            mock(ChatRoomQueryPort::class.java),
+            mock(ScheduledMessageDtoMapper::class.java),
+            messagePublisherPort
+        )
+
+        val exception = assertThrows<com.stark.shoot.infrastructure.exception.web.ScheduledMessageNotOwnedException> {
+            testService.cancelScheduledMessage(
+                CancelScheduledMessageCommand("507f1f77bcf86cd799439011", UserId.from(2L))
+            )
+        }
+
+        assertThat(exception.message).contains("본인이 예약한 메시지만 취소할 수 있습니다")
+    }
+
+    @Test
+    @DisplayName("[bad] 이미 처리된 예약 메시지는 취소할 수 없다")
+    fun `이미 처리된 예약 메시지는 취소할 수 없다`() {
+        class TestScheduledMessagePort : ScheduledMessagePort {
+            override fun saveScheduledMessage(scheduledMessage: ScheduledMessage): ScheduledMessage = scheduledMessage
+
+            override fun findById(id: org.bson.types.ObjectId): ScheduledMessage {
+                return ScheduledMessage(
+                    id = MessageId.from("507f1f77bcf86cd799439011"),
+                    roomId = 1L,
+                    senderId = 2L,
+                    content = MessageContent(
+                        text = "이미 전송된 예약 메시지",
+                        type = MessageType.TEXT
+                    ),
+                    scheduledAt = Instant.now().plus(1, ChronoUnit.HOURS),
+                    status = ScheduledMessageStatus.SENT
+                )
+            }
+
+            override fun findByUserId(userId: Long, roomId: Long?): List<ScheduledMessage> = emptyList()
+            override fun findPendingMessagesBeforeTime(time: Instant): List<ScheduledMessage> = emptyList()
+        }
+
+        val testService = ScheduledMessageService(
+            TestScheduledMessagePort(),
+            mock(ChatRoomQueryPort::class.java),
+            mock(ScheduledMessageDtoMapper::class.java),
+            messagePublisherPort
+        )
+
+        val exception = assertThrows<com.stark.shoot.infrastructure.exception.web.ScheduledMessageAlreadyProcessedException> {
+            testService.cancelScheduledMessage(
+                CancelScheduledMessageCommand("507f1f77bcf86cd799439011", UserId.from(2L))
+            )
+        }
+
+        assertThat(exception.message).contains("이미 SENT 상태의 메시지입니다")
     }
 
     @Test

@@ -24,7 +24,17 @@ import java.util.concurrent.CompletableFuture
 @DisplayName("Kafka 메시지 발행 어댑터 테스트")
 class KafkaMessagePublishAdapterTest {
 
-    private val kafkaTemplate = mock(KafkaTemplate::class.java) as KafkaTemplate<String, MessageEvent>
+    @Suppress("UNCHECKED_CAST")
+    private fun mockKafkaTemplate(): KafkaTemplate<String, MessageEvent> {
+        return mock(KafkaTemplate::class.java) as KafkaTemplate<String, MessageEvent>
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    private fun mockSendResult(): SendResult<String, MessageEvent> {
+        return mock(SendResult::class.java) as SendResult<String, MessageEvent>
+    }
+
+    private val kafkaTemplate = mockKafkaTemplate()
     private val adapter = PublishKafkaAdapter(kafkaTemplate)
 
     private fun createChatMessage(): ChatMessage {
@@ -63,7 +73,7 @@ class KafkaMessagePublishAdapterTest {
         val key = "test-key"
         val event = createMessageEvent()
 
-        val future = CompletableFuture.completedFuture(mock(SendResult::class.java) as SendResult<String, MessageEvent>)
+        val future = CompletableFuture.completedFuture(mockSendResult())
         `when`(kafkaTemplate.send(topic, key, event)).thenReturn(future)
 
         // when
@@ -109,7 +119,7 @@ class KafkaMessagePublishAdapterTest {
         val key = "test-key"
         val event = createMessageEvent()
 
-        val future = CompletableFuture.completedFuture(mock(SendResult::class.java) as SendResult<String, MessageEvent>)
+        val future = CompletableFuture.completedFuture(mockSendResult())
         `when`(kafkaTemplate.send(topic, key, event)).thenReturn(future)
 
         // when & then - no exception should be thrown

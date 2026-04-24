@@ -86,9 +86,8 @@ class FriendDomainServiceTest {
                 senderId = UserId.from(2L),
                 receiverId = UserId.from(1L)
             )
-            // Note: processFriendAccept will call accept() internally
 
-            val result = service.processFriendAccept(friendRequest)
+            val result = friendRequest.accept()
 
             // Check that we have exactly 2 events
             assertThat(result.events).hasSize(2)
@@ -109,20 +108,20 @@ class FriendDomainServiceTest {
                 senderId = UserId.from(2L),
                 receiverId = UserId.from(1L)
             )
-            // Note: processFriendAccept will call accept() internally
 
-            val result = service.processFriendAccept(friendRequest)
+            val result = friendRequest.accept()
+            val friendships = result.getAllFriendships()
 
             // Check that we have exactly 2 friendships
-            assertThat(result.friendships).hasSize(2)
+            assertThat(friendships).hasSize(2)
 
             // Check the first friendship (receiver -> sender)
-            assertThat(result.friendships[0].userId).isEqualTo(UserId.from(1L))
-            assertThat(result.friendships[0].friendId).isEqualTo(UserId.from(2L))
+            assertThat(friendships[0].userId).isEqualTo(UserId.from(1L))
+            assertThat(friendships[0].friendId).isEqualTo(UserId.from(2L))
 
             // Check the second friendship (sender -> receiver)
-            assertThat(result.friendships[1].userId).isEqualTo(UserId.from(2L))
-            assertThat(result.friendships[1].friendId).isEqualTo(UserId.from(1L))
+            assertThat(friendships[1].userId).isEqualTo(UserId.from(2L))
+            assertThat(friendships[1].friendId).isEqualTo(UserId.from(1L))
         }
 
         @Test
@@ -132,13 +131,12 @@ class FriendDomainServiceTest {
                 senderId = UserId.from(2L),
                 receiverId = UserId.from(1L)
             )
-            // Note: processFriendAccept will call accept() internally
 
-            val result = service.processFriendAccept(friendRequest)
+            friendRequest.accept()
 
             // Check that the request status is updated
-            assertThat(result.updatedRequest.status).isEqualTo(FriendRequestStatus.ACCEPTED)
-            assertThat(result.updatedRequest.respondedAt).isNotNull()
+            assertThat(friendRequest.status).isEqualTo(FriendRequestStatus.ACCEPTED)
+            assertThat(friendRequest.respondedAt).isNotNull()
         }
     }
 
