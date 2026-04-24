@@ -1,0 +1,6 @@
+spring:
+  application:
+    name: shoot-social-service
+
+server:
+  port: 8082
