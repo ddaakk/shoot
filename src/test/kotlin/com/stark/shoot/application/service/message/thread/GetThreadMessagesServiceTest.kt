@@ -16,7 +16,6 @@ import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito.*
 import java.time.Instant
-import org.hamcrest.Matchers.hasSize
 
 @DisplayName("스레드 메시지 조회 서비스 테스트")
 class GetThreadMessagesServiceTest {
@@ -55,7 +54,7 @@ class GetThreadMessagesServiceTest {
 
             // then
             assertThat(result).hasSize(1)
-            assertThat(result[0].id).isEqualTo(message.id?.value)
+            assertThat(result[0].id).isEqualTo(message.id?.value ?: "")
 
             verify(threadQueryPort).findByThreadId(MessageId.from(threadId), 20)
         }

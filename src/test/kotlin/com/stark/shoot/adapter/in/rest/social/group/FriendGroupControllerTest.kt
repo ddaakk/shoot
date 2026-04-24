@@ -1,14 +1,13 @@
 package com.stark.shoot.adapter.`in`.rest.social.group
 
+import com.stark.shoot.application.dto.group.FriendGroupResponseDto
 import com.stark.shoot.application.port.`in`.user.group.FindFriendGroupUseCase
 import com.stark.shoot.application.port.`in`.user.group.ManageFriendGroupUseCase
 import com.stark.shoot.application.port.`in`.user.group.command.*
-import com.stark.shoot.application.dto.group.FriendGroupResponseDto
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito.*
-import org.hamcrest.Matchers.hasSize
 import com.stark.shoot.adapter.`in`.rest.dto.social.group.CreateGroupRequest
 import com.stark.shoot.adapter.`in`.rest.dto.social.group.AddMemberInGroupRequest
 
@@ -27,7 +26,7 @@ class FriendGroupControllerTest {
         val name = "친한 친구들"
         val description = "자주 만나는 친구들"
 
-        val group = createFriendGroup(1L, ownerId, name, description)
+        val group = createFriendGroupDto(1L, ownerId, name, description)
         val request = CreateGroupRequest(ownerId, name, description)
         val command = CreateGroupCommand.of(request)
 
@@ -56,7 +55,7 @@ class FriendGroupControllerTest {
         val groupId = 1L
         val newName = "새로운 그룹 이름"
 
-        val group = createFriendGroup(groupId, 1L, newName, "설명")
+        val group = createFriendGroupDto(groupId, 1L, newName, "설명")
         val command = RenameGroupCommand.of(groupId, newName)
 
         `when`(manageUseCase.renameGroup(command))
@@ -81,7 +80,7 @@ class FriendGroupControllerTest {
         val groupId = 1L
         val newDescription = "새로운 설명"
 
-        val group = createFriendGroup(groupId, 1L, "그룹명", newDescription)
+        val group = createFriendGroupDto(groupId, 1L, "그룹명", newDescription)
         val command = UpdateDescriptionCommand.of(groupId, newDescription)
 
         `when`(manageUseCase.updateDescription(command))
@@ -106,7 +105,7 @@ class FriendGroupControllerTest {
         val groupId = 1L
         val memberId = 2L
 
-        val group = createFriendGroup(
+        val group = createFriendGroupDto(
             id = groupId,
             ownerId = 1L,
             name = "그룹명",
@@ -139,7 +138,7 @@ class FriendGroupControllerTest {
         val groupId = 1L
         val memberId = 2L
 
-        val group = createFriendGroup(
+        val group = createFriendGroupDto(
             id = groupId,
             ownerId = 1L,
             name = "그룹명",
@@ -187,7 +186,7 @@ class FriendGroupControllerTest {
         // given
         val groupId = 1L
 
-        val group = createFriendGroup(
+        val group = createFriendGroupDto(
             id = groupId,
             ownerId = 1L,
             name = "그룹명",
@@ -221,8 +220,8 @@ class FriendGroupControllerTest {
         val ownerId = 1L
 
         val groups = listOf(
-            createFriendGroup(1L, ownerId, "첫 번째 그룹", "첫 번째 설명", setOf(2L, 3L)),
-            createFriendGroup(2L, ownerId, "두 번째 그룹", "두 번째 설명", setOf(4L, 5L))
+            createFriendGroupDto(1L, ownerId, "첫 번째 그룹", "첫 번째 설명", setOf(2L, 3L)),
+            createFriendGroupDto(2L, ownerId, "두 번째 그룹", "두 번째 설명", setOf(4L, 5L))
         )
 
         val command = GetGroupsCommand.of(ownerId)
@@ -252,7 +251,7 @@ class FriendGroupControllerTest {
     }
 
     // 테스트용 FriendGroupResponseDto 객체 생성 헬퍼 메서드
-    private fun createFriendGroup(
+    private fun createFriendGroupDto(
         id: Long,
         ownerId: Long,
         name: String,

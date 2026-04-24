@@ -34,6 +34,7 @@ import java.time.Instant
  */
 @DataMongoTest
 @Import(MessageReactionMapper::class, MessageReactionPersistenceAdapter::class)
+@Tag("mongo")
 @DisplayName("MessageReaction 오류/엣지케이스 테스트")
 class MessageReactionErrorCaseTest {
 

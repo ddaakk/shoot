@@ -14,7 +14,6 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito.*
-import org.springframework.http.HttpStatus
 import org.springframework.security.core.Authentication
 import java.time.Instant
 
@@ -32,25 +31,28 @@ class NotificationReadControllerTest {
         val notificationId = "notification123"
         val userId = 1L
         val now = Instant.now()
-        
+
         val command = MarkNotificationAsReadCommand(
             notificationId = NotificationId.from(notificationId),
             userId = UserId.from(userId)
         )
-        
-        val readNotification = createNotification(
+
+        val readNotificationDto = NotificationResponseDto(
             id = notificationId,
             userId = userId,
             title = "읽은 알림",
             message = "읽은 알림 내용",
-            type = NotificationType.NEW_MESSAGE,
-            sourceType = SourceType.CHAT,
+            type = NotificationType.NEW_MESSAGE.name,
+            sourceId = "source123",
+            sourceType = SourceType.CHAT.name,
             isRead = true,
-            readAt = now
+            createdAt = Instant.now(),
+            readAt = now,
+            metadata = emptyMap()
         )
-        
+
         `when`(authentication.name).thenReturn(userId.toString())
-        `when`(notificationManagementUseCase.markAsRead(command)).thenReturn(readNotification)
+        `when`(notificationManagementUseCase.markAsRead(command)).thenReturn(readNotificationDto)
 
         // when
         val response = controller.markAsRead(authentication, notificationId)
@@ -74,7 +76,7 @@ class NotificationReadControllerTest {
         val command = MarkAllNotificationsAsReadCommand(
             userId = UserId.from(userId)
         )
-        
+
         `when`(authentication.name).thenReturn(userId.toString())
         `when`(notificationManagementUseCase.markAllAsRead(command)).thenReturn(markedCount)
 
@@ -100,7 +102,7 @@ class NotificationReadControllerTest {
             userId = UserId.from(userId),
             type = NotificationType.valueOf(type)
         )
-        
+
         `when`(authentication.name).thenReturn(userId.toString())
         `when`(notificationManagementUseCase.markAllAsReadByType(command)).thenReturn(markedCount)
 
@@ -128,7 +130,7 @@ class NotificationReadControllerTest {
             sourceType = SourceType.valueOf(sourceType),
             sourceId = sourceId
         )
-        
+
         `when`(authentication.name).thenReturn(userId.toString())
         `when`(notificationManagementUseCase.markAllAsReadBySource(command)).thenReturn(markedCount)
 
@@ -155,7 +157,7 @@ class NotificationReadControllerTest {
             sourceType = SourceType.valueOf(sourceType),
             sourceId = null
         )
-        
+
         `when`(authentication.name).thenReturn(userId.toString())
         `when`(notificationManagementUseCase.markAllAsReadBySource(command)).thenReturn(markedCount)
 
@@ -167,33 +169,5 @@ class NotificationReadControllerTest {
         assertThat(response.data).isEqualTo(markedCount)
 
         verify(notificationManagementUseCase).markAllAsReadBySource(command)
-    }
-
-    // 테스트용 NotificationResponseDto 객체 생성 헬퍼 메서드
-    private fun createNotification(
-        id: String,
-        userId: Long,
-        title: String,
-        message: String,
-        type: NotificationType,
-        sourceType: SourceType,
-        sourceId: String = "source123",
-        isRead: Boolean = false,
-        readAt: Instant? = null,
-        metadata: Map<String, Any> = emptyMap()
-    ): NotificationResponseDto {
-        return NotificationResponseDto(
-            id = id,
-            userId = userId,
-            title = title,
-            message = message,
-            type = type.name,
-            sourceId = sourceId,
-            sourceType = sourceType.name,
-            isRead = isRead,
-            createdAt = Instant.now(),
-            readAt = readAt,
-            metadata = metadata
-        )
     }
 }

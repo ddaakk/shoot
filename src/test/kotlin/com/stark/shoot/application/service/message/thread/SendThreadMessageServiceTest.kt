@@ -16,10 +16,7 @@ import com.stark.shoot.domain.chat.message.vo.MessageContent
 import com.stark.shoot.domain.chat.message.vo.MessageId
 import com.stark.shoot.domain.chat.vo.ChatRoomId
 import com.stark.shoot.domain.shared.UserId
-import com.stark.shoot.infrastructure.config.async.ApplicationCoroutineScope
 import com.stark.shoot.infrastructure.exception.web.ResourceNotFoundException
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Job
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
@@ -29,14 +26,6 @@ import java.time.Instant
 
 @DisplayName("스레드 메시지 전송 서비스 테스트")
 class SendThreadMessageServiceTest {
-
-    // Test implementation of ApplicationCoroutineScope
-    class TestApplicationCoroutineScope : ApplicationCoroutineScope() {
-        // Override launch to do nothing and return a dummy Job
-        override fun launch(block: suspend CoroutineScope.() -> Unit): Job {
-            return Job()
-        }
-    }
 
     private lateinit var messageQueryPort: MessageQueryPort
     private lateinit var extractUrlPort: ExtractUrlPort
@@ -66,20 +55,21 @@ class SendThreadMessageServiceTest {
     @DisplayName("[bad] 존재하지 않는 스레드에 메시지를 보내면 예외가 발생한다")
     fun `존재하지 않는 스레드에 메시지를 보내면 예외가 발생한다`() {
         // given
-        val request = SendMessageDto(
+        val threadIdStr = "5f9f1b9b9c9d1b9b9c9d1b9b"
+        val message = SendMessageDto(
             tempId = null,
             roomId = 1L,
             senderId = 2L,
-            content = MessageContentDto("hi", MessageType.TEXT),
-            threadId = "5f9f1b9b9c9d1b9b9c9d1b9b"
+            content = MessageContentDto(text = "hi", type = MessageType.TEXT),
+            threadId = threadIdStr
         )
 
-        val threadId = MessageId.from(request.threadId!!)
+        val threadId = MessageId.from(threadIdStr)
         doReturn(null).`when`(messageQueryPort).findById(threadId)
 
         // when & then
         assertThrows<ResourceNotFoundException> {
-            sendThreadMessageService.sendThreadMessage(SendThreadMessageCommand.of(request))
+            sendThreadMessageService.sendThreadMessage(SendThreadMessageCommand(message))
         }
 
         verify(messageQueryPort).findById(threadId)
@@ -95,7 +85,7 @@ class SendThreadMessageServiceTest {
             tempId = null,
             roomId = 1L,
             senderId = 2L,
-            content = MessageContentDto("hi", MessageType.TEXT),
+            content = MessageContentDto(text = "hi", type = MessageType.TEXT),
             threadId = threadId
         )
 
@@ -133,7 +123,7 @@ class SendThreadMessageServiceTest {
         )
 
         // when
-        sendThreadMessageService.sendThreadMessage(SendThreadMessageCommand.of(request))
+        sendThreadMessageService.sendThreadMessage(SendThreadMessageCommand(request))
 
         // then
         verify(messageQueryPort).findById(messageId)

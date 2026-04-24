@@ -20,13 +20,13 @@ class TokenControllerTest {
         // given
         val refreshTokenHeader = "Bearer refresh.token.here"
         val command = RefreshTokenCommand.of(refreshTokenHeader)
-        val loginResponse = LoginResponseDto(
+        val loginResponseDto = LoginResponseDto(
             userId = "1",
             accessToken = "new.access.token",
             refreshToken = "refresh.token.here"
         )
 
-        `when`(refreshTokenUseCase.generateNewAccessToken(command)).thenReturn(loginResponse)
+        `when`(refreshTokenUseCase.generateNewAccessToken(command)).thenReturn(loginResponseDto)
 
         // when
         val response = controller.refreshToken(refreshTokenHeader)
@@ -34,7 +34,6 @@ class TokenControllerTest {
         // then
         assertThat(response).isNotNull
         assertThat(response.success).isTrue()
-        assertThat(response.data).isEqualTo(loginResponse)
         assertThat(response.data?.accessToken).isEqualTo("new.access.token")
         assertThat(response.data?.refreshToken).isEqualTo("refresh.token.here")
         assertThat(response.data?.userId).isEqualTo("1")

@@ -10,10 +10,8 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito.*
-import org.springframework.http.HttpStatus
 import org.springframework.security.core.Authentication
 import java.time.Instant
-import org.hamcrest.Matchers.hasSize
 
 @DisplayName("NotificationQueryController 단위 테스트")
 class NotificationQueryControllerTest {
@@ -31,7 +29,7 @@ class NotificationQueryControllerTest {
         val offset = 0
 
         val notifications = listOf(
-            createNotification(
+            createNotificationDto(
                 id = "notification1",
                 userId = userId,
                 title = "첫 번째 알림",
@@ -39,7 +37,7 @@ class NotificationQueryControllerTest {
                 type = NotificationType.NEW_MESSAGE,
                 sourceType = SourceType.CHAT
             ),
-            createNotification(
+            createNotificationDto(
                 id = "notification2",
                 userId = userId,
                 title = "두 번째 알림",
@@ -54,7 +52,7 @@ class NotificationQueryControllerTest {
             limit = limit,
             offset = offset
         )
-        
+
         `when`(authentication.name).thenReturn(userId.toString())
         `when`(notificationQueryUseCase.getNotificationsForUser(command)).thenReturn(notifications)
 
@@ -89,7 +87,7 @@ class NotificationQueryControllerTest {
         val offset = 0
 
         val notifications = listOf(
-            createNotification(
+            createNotificationDto(
                 id = "notification1",
                 userId = userId,
                 title = "읽지 않은 알림 1",
@@ -98,7 +96,7 @@ class NotificationQueryControllerTest {
                 sourceType = SourceType.CHAT,
                 isRead = false
             ),
-            createNotification(
+            createNotificationDto(
                 id = "notification2",
                 userId = userId,
                 title = "읽지 않은 알림 2",
@@ -114,7 +112,7 @@ class NotificationQueryControllerTest {
             limit = limit,
             offset = offset
         )
-        
+
         `when`(authentication.name).thenReturn(userId.toString())
         `when`(notificationQueryUseCase.getUnreadNotificationsForUser(command)).thenReturn(notifications)
 
@@ -175,7 +173,7 @@ class NotificationQueryControllerTest {
         val offset = 0
 
         val notifications = listOf(
-            createNotification(
+            createNotificationDto(
                 id = "notification1",
                 userId = userId,
                 title = "친구 요청 알림 1",
@@ -183,7 +181,7 @@ class NotificationQueryControllerTest {
                 type = NotificationType.FRIEND_REQUEST,
                 sourceType = SourceType.FRIEND
             ),
-            createNotification(
+            createNotificationDto(
                 id = "notification2",
                 userId = userId,
                 title = "친구 요청 알림 2",
@@ -199,7 +197,7 @@ class NotificationQueryControllerTest {
             limit = limit,
             offset = offset
         )
-        
+
         `when`(authentication.name).thenReturn(userId.toString())
         `when`(notificationQueryUseCase.getNotificationsByType(command)).thenReturn(notifications)
 
@@ -233,7 +231,7 @@ class NotificationQueryControllerTest {
         val offset = 0
 
         val notifications = listOf(
-            createNotification(
+            createNotificationDto(
                 id = "notification1",
                 userId = userId,
                 title = "채팅 알림 1",
@@ -242,7 +240,7 @@ class NotificationQueryControllerTest {
                 sourceType = SourceType.CHAT,
                 sourceId = sourceId
             ),
-            createNotification(
+            createNotificationDto(
                 id = "notification2",
                 userId = userId,
                 title = "채팅 알림 2",
@@ -260,7 +258,7 @@ class NotificationQueryControllerTest {
             limit = limit,
             offset = offset
         )
-        
+
         `when`(authentication.name).thenReturn(userId.toString())
         `when`(notificationQueryUseCase.getNotificationsBySource(command)).thenReturn(notifications)
 
@@ -287,7 +285,7 @@ class NotificationQueryControllerTest {
     }
 
     // 테스트용 NotificationResponseDto 객체 생성 헬퍼 메서드
-    private fun createNotification(
+    private fun createNotificationDto(
         id: String,
         userId: Long,
         title: String,

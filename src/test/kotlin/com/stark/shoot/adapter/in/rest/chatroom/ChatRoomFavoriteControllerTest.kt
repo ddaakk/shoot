@@ -1,7 +1,7 @@
 package com.stark.shoot.adapter.`in`.rest.chatroom
 
-import com.stark.shoot.adapter.`in`.rest.dto.chatroom.ChatRoomFavoriteRequest
 import com.stark.shoot.application.dto.chatroom.ChatRoomResponseDto
+import com.stark.shoot.adapter.`in`.rest.dto.chatroom.ChatRoomFavoriteRequest
 import com.stark.shoot.application.port.`in`.chatroom.UpdateChatRoomFavoriteUseCase
 import com.stark.shoot.application.port.`in`.chatroom.command.UpdateFavoriteStatusCommand
 import org.assertj.core.api.Assertions.assertThat

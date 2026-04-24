@@ -31,7 +31,6 @@ import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.*
 import org.springframework.messaging.simp.SimpMessagingTemplate
 import java.time.Instant
-import org.hamcrest.Matchers.hasSize
 
 @DisplayName("페이지네이션 메시지 동기화 서비스 테스트")
 class PaginationMessageSyncServiceTest {
